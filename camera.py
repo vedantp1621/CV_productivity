@@ -1,23 +1,20 @@
-# activate venv: source venv/bin/activate
+# activate venv:   source venv/bin/activate
+ 
 import cv2
 from matplotlib import pyplot as plt
 
-# cap = cv2.VideoCapture(0)
+def start_camera():
+    print("hello  this is running")
+    cap = cv2.VideoCapture(0)
+    while cap.isOpened():
+        ret, frame = cap.read()
+        cv2.imshow('Webcam', frame) 
 
-# ret, frame = cap.read()
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
 
-# plt.imshow(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
-# plt.show()
-# cap.release()
+    cap.release()
+    cv2.destroyAllWindows()
 
-
-cap = cv2.VideoCapture(0)
-while cap.isOpened():
-    ret, frame = cap.read()
-    cv2.imshow('Webcam', frame) 
-
-    if cv2.waitKey(1) & 0xFF == ord('q'):
-        break
-
-cap.release()
-cv2.destroyAllWindows()
+if __name__ == "__main__":
+    start_camera()
