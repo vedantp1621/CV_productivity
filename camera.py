@@ -2,19 +2,20 @@
 
 # sources:
 ## https://medium.com/@amit25173/opencv-eye-tracking-aeb4f1b46aa3
- 
+## eye tracker, try it? https://medium.com/@stepanfilonov/tracking-your-eyes-with-python-3952e66194a6
+
 import cv2
 from matplotlib import pyplot as plt
 
 # Simple code to start camera
 # def start_camera():
-   
+
 #     cap = cv2.VideoCapture(0)
 
 #     while cap.isOpened():
-       
+
 #         ret, frame = cap.read()
-#         cv2.imshow('Webcam', frame) 
+#         cv2.imshow('Webcam', frame)
 
 #         if cv2.waitKey(1) & 0xFF == ord('q'):
 #             break
