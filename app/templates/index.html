@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Focus Tracker Dashboard</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      max-width: 600px;
+      margin: 40px auto;
+      padding: 20px;
+      background-color: #f4f4f4;
+      border-radius: 10px;
+    }
+    h1 {
+      text-align: center;
+    }
+    form {
+      margin-bottom: 20px;
+      padding: 15px;
+      background-color: #fff;
+      border-radius: 8px;
+    }
+    input[type="submit"] {
+      padding: 10px 20px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    input[type="file"] {
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Focus Tracker Dashboard</h1>
+
+  <!-- Upload Form -->
+  <form action="/upload" method="POST" enctype="multipart/form-data">
+    <h3>Upload Distracted Image</h3>
+    <input type="file" name="image" accept="image/*" required>
+    <br><br>
+    <input type="submit" value="Upload">
+  </form>
+
+  <!-- Train Button -->
+  <form action="/train" method="POST">
+    <h3>TODO: Train Model</h3>
+    <input type="submit" value="Train">
+  </form>
+
+  <!-- Start Monitoring Button -->
+  <form action="/start" method="POST">
+    <h3>TODO: Start Monitoring</h3>
+    <input type="submit" value="Start">
+  </form>
+
+  <!-- Test Buttons -->
+  <form action="/test" method="POST">
+    <h3>Test Buttons</h3>
+    <input type="submit" value="Start">
+  </form>
+
+</body>
+</html>
