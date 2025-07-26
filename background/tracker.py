@@ -22,3 +22,4 @@ def start_tracking():
                 title="Stay Focused!", message="You seem distracted.", timeout=3
             )
             distracted_count = 0
+        print(distracted_count)
