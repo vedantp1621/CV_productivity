@@ -39,12 +39,45 @@
   <h1>Focus Tracker Dashboard</h1>
 
   <!-- Upload Form -->
-  <form action="/upload" method="POST" enctype="multipart/form-data">
+  <!-- <form action="/upload" method="POST" enctype="multipart/form-data">
     <h3>Upload Distracted Image</h3>
     <input type="file" name="image" accept="image/*" required>
     <br><br>
     <input type="submit" value="Upload">
+  </form> -->
+   <h2>Take a Picture</h2>
+
+  <video id="video" width="640" height="480" autoplay></video>
+  <br>
+
+  <!-- Form for image submission -->
+  <form id="capture-form" method="POST" action="/capture">
+    <input type="hidden" name="image" id="image-data">
+    <button type="submit" onclick="capture(event)">Capture</button>
   </form>
+
+  <canvas id="canvas" width="640" height="480" style="display:none;"></canvas>
+
+  <script>
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const imageInput = document.getElementById('image-data');
+
+    // Access webcam
+    navigator.mediaDevices.getUserMedia({ video: true })
+      .then((stream) => {
+        video.srcObject = stream;
+      });
+
+    function capture(event) {
+      event.preventDefault(); // Prevent form from submitting too early
+      const context = canvas.getContext('2d');
+      context.drawImage(video, 0, 0, canvas.width, canvas.height);
+      const dataUrl = canvas.toDataURL('image/png');
+      imageInput.value = dataUrl;
+      document.getElementById('capture-form').submit(); // Now submit
+    }
+  </script>
 
   <!-- Train Button -->
   <form action="/train" method="POST">

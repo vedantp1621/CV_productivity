@@ -1,39 +1,44 @@
-from flask import render_template, request, redirect
+from flask import Blueprint, render_template, request, current_app
 import os
 import threading
+import base64
+from datetime import datetime
 
 from background.tracker import start_tracking
 from model.trainer import train_model
 from model.object_detector import yolo_detection
 
+main = Blueprint('main', __name__)
 
-def init_routes(app):
+@main.route("/")
+def home():
+    return render_template("index.html")
 
-    @app.route("/")
-    def home():
-        return render_template("index.html")
+@main.route("/capture", methods=["POST"])
+def capture():
+    data_url = request.form["image"]
+    header, encoded = data_url.split(",", 1)
+    binary_data = base64.b64decode(encoded)
 
-    @app.route("/upload", methods=["POST"])
-    def upload_image():
-        image = request.files.get("image")
-        if image:
-            save_path = os.path.join("training_data", image.filename)
-            image.save(save_path)
-        return redirect("/")
+    folder = current_app.config["UPLOAD_FOLDER"]
+    os.makedirs(folder, exist_ok=True)
 
-    @app.route("/train", methods=["POST"])
-    def train():
-        train_model()
-        return "Model trained!"
+    filename = datetime.now().strftime("%Y%m%d_%H%M%S") + ".png"
+    filepath = os.path.join(folder, filename)
 
-    @app.route("/start", methods=["POST"])
-    def start():
-        thread = threading.Thread(target=start_tracking)
-        thread.daemon = True
-        thread.start()
-        return "Monitoring started!"
+    with open(filepath, "wb") as f:
+        f.write(binary_data)
 
-    @app.route("/test", methods=["POST"])
-    def test():
-        yolo_detection()
-        return "Yolo running!"
+    return "Saved: " + filename
+
+@main.route("/start", methods=["POST"])
+def start():
+    thread = threading.Thread(target=start_tracking)
+    thread.daemon = True
+    thread.start()
+    return "Monitoring started!"
+
+@main.route("/test", methods=["POST"])
+def test():
+    yolo_detection()
+    return "Yolo running!"

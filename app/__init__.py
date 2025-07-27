@@ -2,18 +2,11 @@ from flask import Flask
 import os
 import config
 
-def create_app():
+def create_app(config_class="config.Config"):
     app = Flask(__name__)
+    app.config.from_object(config_class)
 
-    # Load config if needed
-    app.config.from_pyfile("../config.py", silent=True)
-
-    # Create training_data directory
-    os.makedirs(config.TRAINING_DATA_DIR, exist_ok=True)
-
-    # Register routes
-    from .routes import init_routes
-
-    init_routes(app)
+    from .routes import main
+    app.register_blueprint(main)
 
     return app
