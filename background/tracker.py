@@ -1,25 +1,36 @@
 import cv2
-from plyer import notification
-from model.predictor import is_distracted
+import os
+from datetime import datetime
 
 
-def start_tracking():
+def capture_images_every_second(save_folder="database"):
+    """
+    Continuously captures one image per second from the webcam and saves it.
+    Runs until 'q' is pressed in the OpenCV window.
+    Intended to be run in a separate thread.
+    """
+    os.makedirs(save_folder, exist_ok=True)
     cap = cv2.VideoCapture(0)
-    distracted_count = 0
 
-    while True:
-        ret, frame = cap.read()
-        if not ret:
-            continue
+    try:
+        while True:
+            ret, frame = cap.read()
+            if not ret:
+                print("Failed to grab frame.")
+                break
 
-        if is_distracted(frame):
-            distracted_count += 1
-        else:
-            distracted_count = 0
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            filename = f"{timestamp}.png"
+            filepath = os.path.join(save_folder, filename)
+            cv2.imwrite(filepath, frame)
+            print(f"Saved: {filepath}")
 
-        if distracted_count > 30:
-            notification.notify(
-                title="Stay Focused!", message="You seem distracted.", timeout=3
-            )
-            distracted_count = 0
-        print(distracted_count)
+            cv2.imshow("Webcam (Press Q to quit)", frame)
+
+            # Wait 1 second or exit on 'q'
+            if cv2.waitKey(1000) & 0xFF == ord("q"):
+                break
+
+    finally:
+        cap.release()
+        cv2.destroyAllWindows()

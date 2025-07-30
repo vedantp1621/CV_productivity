@@ -1,101 +1,216 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Focus Tracker Dashboard</title>
-  <style>
-    body {
-      font-family: sans-serif;
-      max-width: 600px;
-      margin: 40px auto;
-      padding: 20px;
-      background-color: #f4f4f4;
-      border-radius: 10px;
-    }
-    h1 {
-      text-align: center;
-    }
-    form {
-      margin-bottom: 20px;
-      padding: 15px;
-      background-color: #fff;
-      border-radius: 8px;
-    }
-    input[type="submit"] {
-      padding: 10px 20px;
-      background-color: #4CAF50;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-    input[type="file"] {
-      margin-top: 10px;
-    }
-  </style>
-</head>
-<body>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Focus Tracker Dashboard</title>
+    <style>
+      body {
+        font-family: sans-serif;
+        max-width: 600px;
+        margin: 40px auto;
+        padding: 20px;
+        background-color: #f4f4f4;
+        border-radius: 10px;
+      }
+      h1 {
+        text-align: center;
+      }
+      form {
+        margin-bottom: 20px;
+        padding: 15px;
+        background-color: #fff;
+        border-radius: 8px;
+      }
+      input[type="submit"] {
+        padding: 10px 20px;
+        background-color: #4caf50;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+      }
+      input[type="file"] {
+        margin-top: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Focus Tracker Dashboard</h1>
 
-  <h1>Focus Tracker Dashboard</h1>
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <title>Webcam Capture</title>
+        <style>
+          #confirmation {
+            color: green;
+            margin-top: 10px;
+            font-weight: bold;
+          }
+        </style>
+      </head>
+      <body>
+        <h2>Take a Picture</h2>
 
-  <!-- Upload Form -->
-  <!-- <form action="/upload" method="POST" enctype="multipart/form-data">
-    <h3>Upload Distracted Image</h3>
-    <input type="file" name="image" accept="image/*" required>
-    <br><br>
-    <input type="submit" value="Upload">
-  </form> -->
-   <h2>Take a Picture</h2>
+        <video id="video" width="640" height="480" autoplay></video>
+        <br />
 
-  <video id="video" width="640" height="480" autoplay></video>
-  <br>
+        <form id="capture-form" method="POST" action="/capture">
+          <input type="hidden" name="image" id="image-data" />
+          <button type="submit" onclick="capture(event)">Capture</button>
+        </form>
 
-  <!-- Form for image submission -->
-  <form id="capture-form" method="POST" action="/capture">
-    <input type="hidden" name="image" id="image-data">
-    <button type="submit" onclick="capture(event)">Capture</button>
-  </form>
+        <canvas
+          id="canvas"
+          width="640"
+          height="480"
+          style="display: none"
+        ></canvas>
 
-  <canvas id="canvas" width="640" height="480" style="display:none;"></canvas>
+        <div id="confirmation" style="display: none">
+          ✅ Image saved successfully!
+        </div>
 
-  <script>
-    const video = document.getElementById('video');
-    const canvas = document.getElementById('canvas');
-    const imageInput = document.getElementById('image-data');
+        <script>
+          const video = document.getElementById("video");
+          const canvas = document.getElementById("canvas");
+          const imageInput = document.getElementById("image-data");
+          const confirmation = document.getElementById("confirmation");
 
-    // Access webcam
-    navigator.mediaDevices.getUserMedia({ video: true })
-      .then((stream) => {
-        video.srcObject = stream;
-      });
+          // Access webcam
+          navigator.mediaDevices
+            .getUserMedia({ video: true })
+            .then((stream) => {
+              video.srcObject = stream;
+            });
 
-    function capture(event) {
-      event.preventDefault(); // Prevent form from submitting too early
-      const context = canvas.getContext('2d');
-      context.drawImage(video, 0, 0, canvas.width, canvas.height);
-      const dataUrl = canvas.toDataURL('image/png');
-      imageInput.value = dataUrl;
-      document.getElementById('capture-form').submit(); // Now submit
-    }
-  </script>
+          function capture(event) {
+            event.preventDefault(); // prevent form auto-submit
 
-  <!-- Train Button -->
-  <form action="/train" method="POST">
-    <h3>TODO: Train Model</h3>
-    <input type="submit" value="Train">
-  </form>
+            const ctx = canvas.getContext("2d");
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-  <!-- Start Monitoring Button -->
-  <form action="/start" method="POST">
-    <h3>TODO: Start Monitoring</h3>
-    <input type="submit" value="Start">
-  </form>
+            const dataUrl = canvas.toDataURL("image/jpeg", 0.7); // compressed
+            imageInput.value = dataUrl;
 
-  <!-- Test Buttons -->
-  <form action="/test" method="POST">
-    <h3>Test Buttons</h3>
-    <input type="submit" value="Start">
-  </form>
+            fetch("/capture", {
+              method: "POST",
+              headers: { "Content-Type": "application/x-www-form-urlencoded" },
+              body: "image=" + encodeURIComponent(dataUrl),
+            })
+              .then((res) => res.text())
+              .then((msg) => {
+                confirmation.style.display = "block";
+                confirmation.textContent = "✅ " + msg;
 
-</body>
+                // Clear confirmation after 5 seconds
+                setTimeout(() => {
+                  confirmation.style.display = "none";
+                }, 5000);
+              });
+          }
+        </script>
+      </body>
+    </html>
+
+    <!-- Start Monitoring Button -->
+    <html>
+      <head>
+        <title>Webcam Capture</title>
+        <style>
+          #confirmation {
+            color: green;
+            margin-top: 10px;
+            font-weight: bold;
+          }
+        </style>
+      </head>
+      <body>
+        <h3>TODO: Start Monitoring</h3>
+        <video id="video" width="640" height="480" autoplay></video>
+        <canvas
+          id="canvas"
+          width="640"
+          height="480"
+          style="display: none"
+        ></canvas>
+
+        <form action="/start" method="POST">
+          <input type="submit" value="Start" />
+          <button id="start-btn" type="button">Start Monitoring</button>
+        </form>
+
+        <form onsubmit="return false;">
+          <input type="hidden" id="image-data" name="image" />
+        </form>
+
+        <p id="confirmation" style="display: none"></p>
+
+        <script>
+          video = document.getElementById("video");
+          canvas = document.getElementById("canvas");
+          imageInput = document.getElementById("image-data");
+          confirmation = document.getElementById("confirmation");
+          const startBtn = document.getElementById("start-btn");
+
+          let captureInterval = null;
+
+          // Access webcam
+          navigator.mediaDevices
+            .getUserMedia({ video: true })
+            .then((stream) => {
+              video.srcObject = stream;
+            })
+            .catch((err) => {
+              console.error("Error accessing webcam:", err);
+            });
+
+          // Start monitoring on button click
+          startBtn.addEventListener("click", () => {
+            if (captureInterval) return; // avoid double-starting
+
+            captureInterval = setInterval(capture, 1000); // capture every 1 second
+            startBtn.disabled = true;
+            startBtn.textContent = "Monitoring...";
+          });
+
+          function capture(event) {
+            event.preventDefault();
+            const ctx = canvas.getContext("2d");
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            const dataUrl = canvas.toDataURL("image/jpeg", 0.7);
+            imageInput.value = dataUrl;
+
+            fetch("/capture", {
+              method: "POST",
+              headers: { "Content-Type": "application/x-www-form-urlencoded" },
+              body: "image=" + encodeURIComponent(dataUrl),
+            })
+              .then((res) => res.text())
+              .then((msg) => {
+                confirmation.style.display = "block";
+                confirmation.textContent = "✅ " + msg;
+
+                setTimeout(() => {
+                  confirmation.style.display = "none";
+                }, 1000);
+              });
+          }
+        </script>
+      </body>
+    </html>
+
+    <!-- Train Button -->
+    <form action="/train" method="POST">
+      <h3>TODO: Train Model</h3>
+      <input type="submit" value="Train" />
+    </form>
+
+    <!-- Test Buttons -->
+    <form action="/test" method="POST">
+      <h3>Test Buttons</h3>
+      <input type="submit" value="Start" />
+    </form>
+  </body>
 </html>
