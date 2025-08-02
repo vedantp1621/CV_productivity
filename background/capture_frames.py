@@ -1,14 +1,10 @@
+# tracker.py
 import cv2
 import os
 from datetime import datetime
 
 
 def capture_images_every_second(save_folder="database"):
-    """
-    Continuously captures one image per second from the webcam and saves it.
-    Runs until 'q' is pressed in the OpenCV window.
-    Intended to be run in a separate thread.
-    """
     os.makedirs(save_folder, exist_ok=True)
     cap = cv2.VideoCapture(0)
 
@@ -25,9 +21,6 @@ def capture_images_every_second(save_folder="database"):
             cv2.imwrite(filepath, frame)
             print(f"Saved: {filepath}")
 
-            cv2.imshow("Webcam (Press Q to quit)", frame)
-
-            # Wait 1 second or exit on 'q'
             if cv2.waitKey(1000) & 0xFF == ord("q"):
                 break
 

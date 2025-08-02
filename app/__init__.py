@@ -13,6 +13,11 @@ def create_app(config_class="config.Config"):
         shutil.rmtree(captures_folder)
     os.makedirs(captures_folder)
 
+    # Clear the database folder at startup
+    database_folder = app.config["FRAME_STORAGE"]
+    if os.path.exists(database_folder):
+        shutil.rmtree(database_folder)
+
     from .routes import main
     app.register_blueprint(main)
 

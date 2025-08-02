@@ -53,6 +53,7 @@
         <h2>Take a Picture</h2>
 
         <video id="video" width="640" height="480" autoplay></video>
+
         <br />
 
         <form id="capture-form" method="POST" action="/capture">
@@ -114,89 +115,55 @@
     </html>
 
     <!-- Start Monitoring Button -->
+    <!DOCTYPE html>
     <html>
       <head>
-        <title>Webcam Capture</title>
+        <title>Focus Tracker</title>
         <style>
-          #confirmation {
-            color: green;
+          #status-message {
             margin-top: 10px;
             font-weight: bold;
+            color: green;
           }
         </style>
       </head>
       <body>
-        <h3>TODO: Start Monitoring</h3>
-        <video id="video" width="640" height="480" autoplay></video>
-        <canvas
-          id="canvas"
-          width="640"
-          height="480"
-          style="display: none"
-        ></canvas>
 
-        <form action="/start" method="POST">
-          <input type="submit" value="Start" />
-          <button id="start-btn" type="button">Start Monitoring</button>
-        </form>
-
-        <form onsubmit="return false;">
-          <input type="hidden" id="image-data" name="image" />
-        </form>
-
-        <p id="confirmation" style="display: none"></p>
+        <br />
+        <button id="start-btn">Start Monitoring</button>
+        <p id="status-message" style="display: none"></p>
 
         <script>
-          video = document.getElementById("video");
-          canvas = document.getElementById("canvas");
-          imageInput = document.getElementById("image-data");
-          confirmation = document.getElementById("confirmation");
           const startBtn = document.getElementById("start-btn");
+          const statusMessage = document.getElementById("status-message");
+          const webcamVideo = document.getElementById("video");
 
-          let captureInterval = null;
-
-          // Access webcam
           navigator.mediaDevices
             .getUserMedia({ video: true })
             .then((stream) => {
-              video.srcObject = stream;
+              webcamVideo.srcObject = stream;
             })
             .catch((err) => {
               console.error("Error accessing webcam:", err);
             });
 
-          // Start monitoring on button click
           startBtn.addEventListener("click", () => {
-            if (captureInterval) return; // avoid double-starting
-
-            captureInterval = setInterval(capture, 1000); // capture every 1 second
-            startBtn.disabled = true;
-            startBtn.textContent = "Monitoring...";
-          });
-
-          function capture(event) {
-            event.preventDefault();
-            const ctx = canvas.getContext("2d");
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-            const dataUrl = canvas.toDataURL("image/jpeg", 0.7);
-            imageInput.value = dataUrl;
-
-            fetch("/capture", {
-              method: "POST",
-              headers: { "Content-Type": "application/x-www-form-urlencoded" },
-              body: "image=" + encodeURIComponent(dataUrl),
-            })
-              .then((res) => res.text())
-              .then((msg) => {
-                confirmation.style.display = "block";
-                confirmation.textContent = "✅ " + msg;
-
-                setTimeout(() => {
-                  confirmation.style.display = "none";
-                }, 1000);
+            fetch("/start-monitoring", { method: "POST" })
+              .then((res) => res.json())
+              .then((data) => {
+                statusMessage.style.display = "block";
+                statusMessage.textContent =
+                  data.status === "started"
+                    ? "✅ Monitoring started in background."
+                    : "⚠️ Already running.";
+              })
+              .catch((err) => {
+                statusMessage.style.display = "block";
+                statusMessage.style.color = "red";
+                statusMessage.textContent = "Error starting monitoring.";
+                console.error(err);
               });
-          }
+          });
         </script>
       </body>
     </html>

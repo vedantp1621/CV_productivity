@@ -4,11 +4,12 @@ import threading
 import base64
 from datetime import datetime
 
-from background.tracker import capture_images_every_second
-from model.trainer import train_model
-from model.object_detector import yolo_detection
+from background.capture_frames import capture_images_every_second
+from background.object_detector import yolo_detection
 
 main = Blueprint('main', __name__)
+
+capture_frames_thread = None
 
 @main.route("/")
 def home():
@@ -18,6 +19,7 @@ def home():
     )
     return render_template("index.html", image_count=image_count)
 
+# Saves images uploaded by user
 @main.route("/capture", methods=["POST"])
 def capture():
     data_url = request.form["image"]
@@ -39,11 +41,18 @@ def capture():
 
     return jsonify({"message": f"Saved: {filename}", "count": image_count})
 
-@main.route("/start", methods=["POST"])
-def start():
-    thread = threading.Thread(target=capture_images_every_second, daemon=True)
-    thread.start()
-    return "Monitoring started!"
+# Runs capture_frames.py on a new thread
+@main.route("/start-monitoring", methods=["POST"])
+def start_monitoring():
+    global capture_frames_thread
+    if capture_frames_thread is None or not capture_frames_thread.is_alive():
+        capture_frames_thread = threading.Thread(
+            target=capture_images_every_second, daemon=True
+        )
+        capture_frames_thread.start()
+        return jsonify({"status": "started"})
+    return jsonify({"status": "already running"})
+
 
 @main.route("/test", methods=["POST"])
 def test():
