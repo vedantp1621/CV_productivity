@@ -1,183 +1,160 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <title>Focus Tracker Dashboard</title>
-    <style>
-      body {
-        font-family: sans-serif;
-        max-width: 600px;
-        margin: 40px auto;
-        padding: 20px;
-        background-color: #f4f4f4;
-        border-radius: 10px;
-      }
-      h1 {
-        text-align: center;
-      }
-      form {
-        margin-bottom: 20px;
-        padding: 15px;
-        background-color: #fff;
-        border-radius: 8px;
-      }
-      input[type="submit"] {
-        padding: 10px 20px;
-        background-color: #4caf50;
-        color: white;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-      }
-      input[type="file"] {
-        margin-top: 10px;
-      }
-    </style>
-  </head>
-  <body>
-    <h1>Focus Tracker Dashboard</h1>
+<head>
+  <meta charset="UTF-8" />
+  <title>Focus Tracker Dashboard</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      max-width: 800px;
+      margin: 40px auto;
+      padding: 20px;
+      background-color: #f4f4f4;
+      border-radius: 10px;
+    }
 
-    <!DOCTYPE html>
-    <html>
-      <head>
-        <title>Webcam Capture</title>
-        <style>
-          #confirmation {
-            color: green;
-            margin-top: 10px;
-            font-weight: bold;
-          }
-        </style>
-      </head>
-      <body>
-        <h2>Take a Picture</h2>
+    h1, h2, h3 {
+      text-align: center;
+    }
 
-        <video id="video" width="640" height="480" autoplay></video>
+    form, .section {
+      margin-bottom: 30px;
+      padding: 20px;
+      background-color: #fff;
+      border-radius: 8px;
+    }
 
-        <br />
+    button,
+    input[type="submit"] {
+      padding: 10px 20px;
+      background-color: #4caf50;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
 
-        <form id="capture-form" method="POST" action="/capture">
-          <input type="hidden" name="image" id="image-data" />
-          <button type="submit" onclick="capture(event)">Capture</button>
-        </form>
+    input[type="file"] {
+      margin-top: 10px;
+    }
 
-        <canvas
-          id="canvas"
-          width="640"
-          height="480"
-          style="display: none"
-        ></canvas>
+    #confirmation,
+    #status-message {
+      color: green;
+      margin-top: 10px;
+      font-weight: bold;
+      display: none;
+    }
 
-        <div id="confirmation" style="display: none">
-          ✅ Image saved successfully!
-        </div>
+    #canvas {
+      display: none;
+    }
 
-        <script>
-          const video = document.getElementById("video");
-          const canvas = document.getElementById("canvas");
-          const imageInput = document.getElementById("image-data");
-          const confirmation = document.getElementById("confirmation");
+    video {
+      display: block;
+      margin: 0 auto 10px auto;
+    }
+  </style>
+</head>
+<body>
+  <h1>Focus Tracker Dashboard</h1>
 
-          // Access webcam
-          navigator.mediaDevices
-            .getUserMedia({ video: true })
-            .then((stream) => {
-              video.srcObject = stream;
-            });
-
-          function capture(event) {
-            event.preventDefault(); // prevent form auto-submit
-
-            const ctx = canvas.getContext("2d");
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-            const dataUrl = canvas.toDataURL("image/jpeg", 0.7); // compressed
-            imageInput.value = dataUrl;
-
-            fetch("/capture", {
-              method: "POST",
-              headers: { "Content-Type": "application/x-www-form-urlencoded" },
-              body: "image=" + encodeURIComponent(dataUrl),
-            })
-              .then((res) => res.text())
-              .then((msg) => {
-                confirmation.style.display = "block";
-                confirmation.textContent = "✅ " + msg;
-
-                // Clear confirmation after 5 seconds
-                setTimeout(() => {
-                  confirmation.style.display = "none";
-                }, 5000);
-              });
-          }
-        </script>
-      </body>
-    </html>
-
-    <!-- Start Monitoring Button -->
-    <!DOCTYPE html>
-    <html>
-      <head>
-        <title>Focus Tracker</title>
-        <style>
-          #status-message {
-            margin-top: 10px;
-            font-weight: bold;
-            color: green;
-          }
-        </style>
-      </head>
-      <body>
-
-        <br />
-        <button id="start-btn">Start Monitoring</button>
-        <p id="status-message" style="display: none"></p>
-
-        <script>
-          const startBtn = document.getElementById("start-btn");
-          const statusMessage = document.getElementById("status-message");
-          const webcamVideo = document.getElementById("video");
-
-          navigator.mediaDevices
-            .getUserMedia({ video: true })
-            .then((stream) => {
-              webcamVideo.srcObject = stream;
-            })
-            .catch((err) => {
-              console.error("Error accessing webcam:", err);
-            });
-
-          startBtn.addEventListener("click", () => {
-            fetch("/start-monitoring", { method: "POST" })
-              .then((res) => res.json())
-              .then((data) => {
-                statusMessage.style.display = "block";
-                statusMessage.textContent =
-                  data.status === "started"
-                    ? "✅ Monitoring started in background."
-                    : "⚠️ Already running.";
-              })
-              .catch((err) => {
-                statusMessage.style.display = "block";
-                statusMessage.style.color = "red";
-                statusMessage.textContent = "Error starting monitoring.";
-                console.error(err);
-              });
-          });
-        </script>
-      </body>
-    </html>
-
-    <!-- Train Button -->
-    <form action="/train" method="POST">
-      <h3>TODO: Train Model</h3>
-      <input type="submit" value="Train" />
+  <!-- Webcam Capture Section -->
+  <div class="section">
+    <h2>Take a Picture</h2>
+    <video id="video" width="640" height="480" autoplay></video>
+    
+    <form id="capture-form" method="POST" action="/capture">
+      <input type="hidden" name="image" id="image-data" />
+      <button type="submit" onclick="capture(event)">Capture</button>
     </form>
 
-    <!-- Test Buttons -->
-    <form action="/test" method="POST">
-      <h3>Test Buttons</h3>
-      <input type="submit" value="Start" />
-    </form>
-  </body>
+    <canvas id="canvas" width="640" height="480"></canvas>
+    <div id="confirmation">✅ Image saved successfully!</div>
+  </div>
+
+  <!-- Start Monitoring Section -->
+  <div class="section">
+    <h2>Start Monitoring</h2>
+    <button id="start-btn">Start Monitoring</button>
+    <p id="status-message"></p>
+  </div>
+
+  <!-- Train Button -->
+  <form action="/train" method="POST" class="section">
+    <h3>TODO: Train Model</h3>
+    <input type="submit" value="Train" />
+  </form>
+
+  <!-- Test Button -->
+  <form action="/test" method="POST" class="section">
+    <h3>Test Buttons</h3>
+    <input type="submit" value="Start" />
+  </form>
+
+  <!-- JavaScript -->
+  <script>
+    const video = document.getElementById("video");
+    const canvas = document.getElementById("canvas");
+    const imageInput = document.getElementById("image-data");
+    const confirmation = document.getElementById("confirmation");
+    const startBtn = document.getElementById("start-btn");
+    const statusMessage = document.getElementById("status-message");
+
+    // Access webcam
+    navigator.mediaDevices
+      .getUserMedia({ video: true })
+      .then((stream) => {
+        video.srcObject = stream;
+      })
+      .catch((err) => {
+        console.error("Error accessing webcam:", err);
+      });
+
+    // Capture image
+    function capture(event) {
+      event.preventDefault();
+
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+      const dataUrl = canvas.toDataURL("image/jpeg", 0.7);
+      imageInput.value = dataUrl;
+
+      fetch("/capture", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: "image=" + encodeURIComponent(dataUrl),
+      })
+        .then((res) => res.text())
+        .then((msg) => {
+          confirmation.textContent = "✅ " + msg;
+          confirmation.style.display = "block";
+          setTimeout(() => {
+            confirmation.style.display = "none";
+          }, 5000);
+        });
+    }
+
+    // Start monitoring
+    startBtn.addEventListener("click", () => {
+      fetch("/start-monitoring", { method: "POST" })
+        .then((res) => res.json())
+        .then((data) => {
+          statusMessage.style.display = "block";
+          statusMessage.style.color = "green";
+          statusMessage.textContent =
+            data.status === "started"
+              ? "✅ Monitoring started in background."
+              : "⚠️ Already running.";
+        })
+        .catch((err) => {
+          statusMessage.style.display = "block";
+          statusMessage.style.color = "red";
+          statusMessage.textContent = "Error starting monitoring.";
+          console.error(err);
+        });
+    });
+  </script>
+</body>
 </html>

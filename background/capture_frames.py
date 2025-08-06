@@ -1,10 +1,11 @@
-# tracker.py
 import cv2
 import os
+import time
 from datetime import datetime
 
 
 def capture_images_every_second(save_folder="database"):
+    
     os.makedirs(save_folder, exist_ok=True)
     cap = cv2.VideoCapture(0)
 
@@ -21,8 +22,7 @@ def capture_images_every_second(save_folder="database"):
             cv2.imwrite(filepath, frame)
             print(f"Saved: {filepath}")
 
-            if cv2.waitKey(1000) & 0xFF == ord("q"):
-                break
+            time.sleep(1)
 
     finally:
         cap.release()
