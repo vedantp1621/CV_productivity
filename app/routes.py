@@ -6,6 +6,7 @@ from datetime import datetime
 
 from background.capture_frames import capture_images_every_second
 from background.object_detector import yolo_detection
+from background.predictor import ImageVectorDB
 
 main = Blueprint('main', __name__)
 
@@ -13,6 +14,8 @@ capture_frames_thread = None
 
 @main.route("/")
 def home():
+    watch_folder = current_app.config["FRAME_STORAGE"]
+    db = ImageVectorDB(watch_folder=watch_folder)
     folder = current_app.config["UPLOAD_FOLDER"]
     image_count = len(
         [f for f in os.listdir(folder) if f.lower().endswith((".png", ".jpg", ".jpeg"))]
@@ -52,7 +55,6 @@ def start_monitoring():
         capture_frames_thread.start()
         return jsonify({"status": "started"})
     return jsonify({"status": "already running"})
-
 
 @main.route("/test", methods=["POST"])
 def test():
