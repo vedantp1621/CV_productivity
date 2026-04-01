@@ -4,12 +4,17 @@ import threading
 import base64
 from datetime import datetime
 
-from background.capture_frames import capture_images_every_second
-from background.object_detector import yolo_detection
+from background.capture import capture_loop
+from background.predictor import yolo_loop
+from background.gaze import gaze_loop
+from background.shared import monitoring_active, detection_state, detection_lock
 
 main = Blueprint('main', __name__)
 
-capture_frames_thread = None
+_capture_thread = None
+_yolo_thread = None
+_gaze_thread = None
+
 
 @main.route("/")
 def home():
@@ -18,6 +23,7 @@ def home():
         [f for f in os.listdir(folder) if f.lower().endswith((".png", ".jpg", ".jpeg"))]
     )
     return render_template("index.html", image_count=image_count)
+
 
 # Saves images uploaded by user
 @main.route("/capture", methods=["POST"])
@@ -41,20 +47,46 @@ def capture():
 
     return jsonify({"message": f"Saved: {filename}", "count": image_count})
 
-# Runs capture_frames.py on a new thread
+
 @main.route("/start-monitoring", methods=["POST"])
 def start_monitoring():
-    global capture_frames_thread
-    if capture_frames_thread is None or not capture_frames_thread.is_alive():
-        capture_frames_thread = threading.Thread(
-            target=capture_images_every_second, daemon=True
-        )
-        capture_frames_thread.start()
-        return jsonify({"status": "started"})
-    return jsonify({"status": "already running"})
+    global _capture_thread, _yolo_thread, _gaze_thread
+
+    if monitoring_active.is_set():
+        return jsonify({"status": "already running"})
+
+    monitoring_active.set()
+
+    webcam_index = current_app.config.get("WEBCAM_INDEX", 0)
+
+    _capture_thread = threading.Thread(
+        target=capture_loop, args=(webcam_index,), daemon=True
+    )
+    _yolo_thread = threading.Thread(target=yolo_loop, daemon=True)
+    _gaze_thread = threading.Thread(target=gaze_loop, daemon=True)
+
+    _capture_thread.start()
+    _yolo_thread.start()
+    _gaze_thread.start()
+
+    return jsonify({"status": "started"})
+
+
+@main.route("/status")
+def status():
+    with detection_lock:
+        return jsonify(dict(detection_state))
+
+
+@main.route("/stop-monitoring", methods=["POST"])
+def stop_monitoring():
+    monitoring_active.clear()
+    return jsonify({"status": "stopped"})
 
 
 @main.route("/test", methods=["POST"])
 def test():
-    yolo_detection()
-    return "Yolo running!"
+    return jsonify({
+        "status": "YOLO detection is now part of the monitoring pipeline.",
+        "hint": "POST to /start-monitoring to begin real-time detection."
+    })
