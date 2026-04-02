@@ -1,7 +1,7 @@
 import cv2
 import queue as q
 
-from background.shared import detection_queue, monitoring_active
+from background.shared import yolo_queue, attention_queue, monitoring_active
 
 
 def _push(target_queue: q.Queue, frame):
@@ -37,7 +37,8 @@ def capture_loop(webcam_index: int = 0):
                 print("Capture: failed to grab frame.")
                 break
 
-            _push(detection_queue, frame)
+            _push(yolo_queue, frame)
+            _push(attention_queue, frame)
     finally:
         cap.release()
         monitoring_active.clear()

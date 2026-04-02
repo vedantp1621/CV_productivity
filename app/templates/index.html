@@ -8,23 +8,23 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg:          #0a0a0b;
-      --surface:     #111114;
-      --surface-2:   #1a1a1f;
-      --border:      #2a2a30;
-      --border-2:    #3a3a42;
-      --text:        #f0f0f2;
-      --muted:       #666672;
-      --accent:      #4f7eff;
-      --accent-dim:  rgba(79,126,255,.14);
-      --green:       #22c55e;
-      --green-dim:   rgba(34,197,94,.12);
-      --green-ring:  rgba(34,197,94,.35);
-      --red:         #ef4444;
-      --red-dim:     rgba(239,68,68,.10);
-      --red-ring:    rgba(239,68,68,.35);
-      --r:           10px;
-      --r-sm:        6px;
+      --bg:        #0a0a0b;
+      --surface:   #111114;
+      --surface-2: #1a1a1f;
+      --border:    #2a2a30;
+      --border-2:  #3a3a42;
+      --text:      #f0f0f2;
+      --muted:     #666672;
+      --accent:    #4f7eff;
+      --green:     #22c55e;
+      --red:       #ef4444;
+      --red-dim:   rgba(239,68,68,.10);
+      --red-ring:  rgba(239,68,68,.35);
+      --amber:     #f59e0b;
+      --amber-dim: rgba(245,158,11,.10);
+      --amber-ring:rgba(245,158,11,.35);
+      --r:         10px;
+      --r-sm:      6px;
     }
 
     body {
@@ -68,28 +68,23 @@
       font-size: 12px;
       font-weight: 700;
       color: #fff;
-      letter-spacing: 0;
       flex-shrink: 0;
     }
 
-    .steps {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .pill {
-      padding: 3px 11px;
-      border-radius: 99px;
+    .status-badge {
       font-size: 11.5px;
       font-weight: 500;
+      padding: 3px 11px;
+      border-radius: 99px;
       border: 1px solid var(--border);
       color: var(--muted);
       transition: all .2s;
     }
-    .pill.active  { background: var(--accent); border-color: var(--accent); color: #fff; }
-    .pill.done    { background: var(--green-dim); border-color: var(--green-ring); color: var(--green); }
-    .step-arrow   { color: var(--border-2); font-size: 12px; }
+    .status-badge.running {
+      background: rgba(34,197,94,.12);
+      border-color: rgba(34,197,94,.35);
+      color: var(--green);
+    }
 
     /* ── Main ────────────────────────────────────────────────────── */
     main {
@@ -100,253 +95,87 @@
       align-items: flex-start;
     }
 
-    /* ─────────────────────────────────────────────────────────────
-       CONFIG VIEW
-    ───────────────────────────────────────────────────────────── */
-    #cfg-view {
+    .layout {
       width: 100%;
       max-width: 980px;
       display: grid;
-      grid-template-columns: 320px 1fr;
+      grid-template-columns: 1fr 256px;
       gap: 20px;
       align-items: start;
     }
 
-    /* Webcam column */
-    .webcam-col {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      position: sticky;
-      top: 24px;
-    }
-
-    .cam-wrap {
-      background: #000;
+    /* ── Feed ────────────────────────────────────────────────────── */
+    .feed-card {
       border: 1px solid var(--border);
       border-radius: var(--r);
       overflow: hidden;
-      position: relative;
+      background: #000;
       aspect-ratio: 4/3;
+      position: relative;
     }
-
-    .cam-wrap video {
+    .feed-card video {
       width: 100%;
       height: 100%;
       object-fit: cover;
       display: block;
     }
 
-    .cam-footer {
-      position: absolute;
-      inset-x: 0;
-      bottom: 0;
-      padding: 20px 10px 8px;
-      background: linear-gradient(transparent, rgba(0,0,0,.65));
-      font-size: 11px;
-      color: rgba(255,255,255,.55);
-      text-align: center;
-      pointer-events: none;
-    }
-
-    .action-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-    }
-
-    .act-btn {
-      padding: 8px 10px;
-      border-radius: var(--r-sm);
-      font-size: 12.5px;
-      font-weight: 500;
-      cursor: pointer;
-      border: 1px solid var(--border);
-      background: var(--surface-2);
-      color: var(--text);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 5px;
-      transition: border-color .15s, background .15s;
-      font-family: inherit;
-    }
-    .act-btn:hover:not(:disabled) { border-color: var(--border-2); background: #22222a; }
-    .act-btn:disabled { opacity: .3; cursor: not-allowed; }
-
-    /* Slots column */
-    .slots-col {
-      display: flex;
-      flex-direction: column;
-      gap: 22px;
-    }
-
-    .section-head {
-      display: flex;
-      align-items: baseline;
-      gap: 8px;
-      margin-bottom: 10px;
-    }
-
-    .section-label {
-      font-size: 11px;
-      font-weight: 600;
-      letter-spacing: .07em;
-      text-transform: uppercase;
-      color: var(--muted);
-    }
-
-    .section-hint {
-      font-size: 11px;
-      color: var(--muted);
-      opacity: .6;
-    }
-
-    .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
-    .grid-5 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
-
-    /* Individual slot */
-    .slot {
-      aspect-ratio: 3/4;
-      border: 2px dashed var(--border);
-      border-radius: var(--r-sm);
-      background: var(--surface);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      position: relative;
-      overflow: hidden;
-      transition: border-color .15s, box-shadow .15s;
-      min-width: 0;
-      user-select: none;
-    }
-    .slot:hover                 { border-color: var(--border-2); }
-    .slot.sel                   { border-color: var(--accent); border-style: solid;
-                                  box-shadow: 0 0 0 3px var(--accent-dim); }
-    .slot.filled                { border-color: var(--green); border-style: solid; }
-
-    .slot-num {
-      width: 22px;
-      height: 22px;
-      border-radius: 50%;
-      border: 1.5px solid var(--border-2);
-      color: var(--muted);
-      font-size: 10px;
-      font-weight: 600;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-bottom: 5px;
-    }
-
-    .slot-lbl {
-      font-size: 9px;
-      color: var(--muted);
-      text-align: center;
-      padding: 0 4px;
-      line-height: 1.3;
-    }
-
-    .slot img {
+    /* ── Calibration overlay ─────────────────────────────────────── */
+    #calib-overlay {
       position: absolute;
       inset: 0;
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
+      background: rgba(10,10,11,.72);
+      backdrop-filter: blur(2px);
       display: none;
-    }
-    .slot.filled img { display: block; }
-
-    .slot-clear {
-      position: absolute;
-      top: 4px;
-      right: 4px;
-      width: 18px;
-      height: 18px;
-      border-radius: 50%;
-      background: rgba(0,0,0,.6);
-      border: none;
-      color: #fff;
-      font-size: 9px;
-      cursor: pointer;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 2;
-      font-family: inherit;
-    }
-    .slot.filled .slot-clear { display: flex; }
-
-    .slot-check {
-      position: absolute;
-      bottom: 4px;
-      right: 4px;
-      width: 15px;
-      height: 15px;
-      border-radius: 50%;
-      background: var(--green);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      font-size: 8px;
-      color: #fff;
-      font-weight: 700;
-    }
-    .slot.filled .slot-check { display: flex; }
-
-    /* Setup footer */
-    .setup-foot {
-      border-top: 1px solid var(--border);
-      padding-top: 18px;
-      display: flex;
       flex-direction: column;
-      gap: 10px;
-    }
-
-    .prog-track {
-      height: 3px;
-      background: var(--surface-2);
-      border-radius: 2px;
-      overflow: hidden;
-    }
-    .prog-fill {
-      height: 100%;
-      background: var(--accent);
-      width: 0%;
-      border-radius: 2px;
-      transition: width .3s ease;
-    }
-
-    .prog-row {
-      display: flex;
-      justify-content: space-between;
-      font-size: 11.5px;
-      color: var(--muted);
-    }
-
-    /* ─────────────────────────────────────────────────────────────
-       MONITOR VIEW
-    ───────────────────────────────────────────────────────────── */
-    #mon-view {
-      display: none;
-      width: 100%;
-      max-width: 980px;
-      grid-template-columns: 1fr 256px;
-      gap: 20px;
-      align-items: start;
-    }
-
-    .feed-wrap {
-      border: 1px solid var(--border);
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
       border-radius: var(--r);
-      overflow: hidden;
-      background: #000;
-      aspect-ratio: 4/3;
     }
-    .feed-wrap video { width: 100%; height: 100%; object-fit: cover; display: block; }
+    #calib-overlay.visible { display: flex; }
 
+    .calib-ring {
+      width: 44px;
+      height: 44px;
+      border: 3px solid rgba(245,158,11,.2);
+      border-top-color: var(--amber);
+      border-radius: 50%;
+      animation: cspin .9s linear infinite;
+    }
+    @keyframes cspin { to { transform: rotate(360deg); } }
+
+    .calib-text {
+      text-align: center;
+      line-height: 1.5;
+    }
+    .calib-text strong {
+      display: block;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--amber);
+    }
+    .calib-text span {
+      font-size: 12px;
+      color: rgba(240,240,242,.5);
+    }
+
+    .calib-bar-track {
+      width: 140px;
+      height: 3px;
+      background: rgba(245,158,11,.15);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .calib-bar-fill {
+      height: 100%;
+      width: 0%;
+      background: var(--amber);
+      border-radius: 2px;
+      transition: width .15s linear;
+    }
+
+    /* ── Sidebar ─────────────────────────────────────────────────── */
     .sidebar {
       display: flex;
       flex-direction: column;
@@ -355,11 +184,12 @@
       top: 24px;
     }
 
+    /* ── Status cards ────────────────────────────────────────────── */
     .stat-card {
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: var(--r);
-      padding: 16px;
+      padding: 18px;
       display: flex;
       align-items: center;
       gap: 14px;
@@ -388,7 +218,7 @@
       50%      { box-shadow: 0 0 0 6px rgba(239,68,68,0); }
     }
 
-    .stat-info { flex: 1; min-width: 0; }
+    .stat-info { flex: 1; }
     .stat-name {
       font-size: 10px;
       font-weight: 600;
@@ -399,45 +229,22 @@
     .stat-val {
       font-size: 14px;
       font-weight: 600;
-      margin-top: 2px;
+      margin-top: 3px;
       transition: color .3s;
     }
     .stat-card.alert .stat-val { color: var(--red); }
 
+    /* ── Controls ────────────────────────────────────────────────── */
     .ctrl-card {
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: var(--r);
       padding: 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
     }
 
-    /* ── Universal buttons ───────────────────────────────────────── */
-    .btn-primary {
+    .btn-start {
       width: 100%;
-      padding: 10px;
-      border: none;
-      border-radius: var(--r-sm);
-      background: var(--accent);
-      color: #fff;
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 7px;
-      transition: background .15s, opacity .15s;
-      font-family: inherit;
-    }
-    .btn-primary:hover:not(:disabled) { background: #3d6de8; }
-    .btn-primary:disabled { background: var(--surface-2); color: var(--muted); cursor: not-allowed; }
-
-    .btn-green {
-      width: 100%;
-      padding: 10px;
+      padding: 11px;
       border: none;
       border-radius: var(--r-sm);
       background: var(--green);
@@ -445,30 +252,38 @@
       font-size: 13px;
       font-weight: 600;
       cursor: pointer;
-      transition: filter .15s;
       font-family: inherit;
+      transition: filter .15s;
     }
-    .btn-green:hover { filter: brightness(1.08); }
-    .btn-green.stop  {
+    .btn-start:hover { filter: brightness(1.08); }
+    .btn-start.stop {
       background: var(--red-dim);
       color: var(--red);
       border: 1px solid var(--red-ring);
     }
 
-    .btn-ghost {
-      width: 100%;
-      padding: 9px;
-      background: transparent;
-      border: 1px solid var(--border);
+    /* ── Calibration sidebar chip ────────────────────────────────── */
+    #calib-chip {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 13px;
+      background: var(--amber-dim);
+      border: 1px solid var(--amber-ring);
       border-radius: var(--r-sm);
-      color: var(--muted);
       font-size: 12px;
       font-weight: 500;
-      cursor: pointer;
-      transition: border-color .15s, color .15s;
-      font-family: inherit;
+      color: var(--amber);
     }
-    .btn-ghost:hover { border-color: var(--border-2); color: var(--text); }
+    #calib-chip.visible { display: flex; }
+    .chip-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--amber);
+      animation: blink-amber 1s ease-in-out infinite;
+      flex-shrink: 0;
+    }
+    @keyframes blink-amber { 0%,100%{opacity:1} 50%{opacity:.3} }
 
     /* ── Toast ───────────────────────────────────────────────────── */
     #toast {
@@ -481,7 +296,6 @@
       border: 1px solid var(--border-2);
       border-radius: var(--r-sm);
       font-size: 12.5px;
-      line-height: 1.45;
       opacity: 0;
       transform: translateY(5px);
       transition: opacity .18s, transform .18s;
@@ -490,18 +304,6 @@
     }
     #toast.show { opacity: 1; transform: none; }
     #toast.err  { border-color: rgba(239,68,68,.5); }
-
-    /* ── Spinner ─────────────────────────────────────────────────── */
-    .spin {
-      width: 13px; height: 13px;
-      border: 2px solid rgba(255,255,255,.25);
-      border-top-color: #fff;
-      border-radius: 50%;
-      animation: rot .55s linear infinite;
-      display: inline-block;
-      flex-shrink: 0;
-    }
-    @keyframes rot { to { transform: rotate(360deg); } }
   </style>
 </head>
 <body>
@@ -511,133 +313,32 @@
     <div class="logo-mark">FT</div>
     Focus Tracker
   </div>
-  <div class="steps">
-    <span class="pill active" id="pill-1">1 · Configure</span>
-    <span class="step-arrow">›</span>
-    <span class="pill" id="pill-2">2 · Monitor</span>
-  </div>
+  <span class="status-badge" id="status-badge">Idle</span>
 </header>
 
 <main>
+  <div class="layout">
 
-  <!-- ╔══════════════════════════════════════════════════════╗
-       ║  CONFIG VIEW                                        ║
-       ╚══════════════════════════════════════════════════════╝ -->
-  <div id="cfg-view">
-
-    <!-- Left: live webcam + actions -->
-    <div class="webcam-col">
-      <div class="cam-wrap">
-        <video id="cfg-video" autoplay playsinline muted></video>
-        <div class="cam-footer" id="cam-hint">Select a slot to activate it</div>
-      </div>
-
-      <div class="action-row">
-        <button class="act-btn" id="snap-btn" disabled>📷 Snap</button>
-        <button class="act-btn" id="upload-btn">📁 Upload</button>
-      </div>
-      <input type="file" id="file-input" accept="image/*" style="display:none">
-      <canvas id="snap-canvas" style="display:none"></canvas>
-    </div>
-
-    <!-- Right: slots + progress -->
-    <div class="slots-col">
-
-      <!-- Phone -->
-      <div>
-        <div class="section-head">
-          <span class="section-label">Your Phone</span>
-          <span class="section-hint">front and back</span>
+    <div class="feed-card">
+      <video id="video" autoplay playsinline muted></video>
+      <div id="calib-overlay">
+        <div class="calib-ring"></div>
+        <div class="calib-text">
+          <strong>Calibrating head pose</strong>
+          <span>Sit normally and look at the screen</span>
         </div>
-        <div class="grid-2">
-          <div class="slot" data-key="phone_front">
-            <div class="slot-num">1</div>
-            <div class="slot-lbl">Front</div>
-            <img alt="">
-            <button class="slot-clear">✕</button>
-            <span class="slot-check">✓</span>
-          </div>
-          <div class="slot" data-key="phone_back">
-            <div class="slot-num">2</div>
-            <div class="slot-lbl">Back</div>
-            <img alt="">
-            <button class="slot-clear">✕</button>
-            <span class="slot-check">✓</span>
-          </div>
+        <div class="calib-bar-track">
+          <div class="calib-bar-fill" id="calib-bar"></div>
         </div>
       </div>
-
-      <!-- Poses -->
-      <div>
-        <div class="section-head">
-          <span class="section-label">Your Distracted Poses</span>
-          <span class="section-hint">5 different poses while not focused</span>
-        </div>
-        <div class="grid-5">
-          <div class="slot" data-key="pose_1">
-            <div class="slot-num">1</div>
-            <div class="slot-lbl">Pose 1</div>
-            <img alt="">
-            <button class="slot-clear">✕</button>
-            <span class="slot-check">✓</span>
-          </div>
-          <div class="slot" data-key="pose_2">
-            <div class="slot-num">2</div>
-            <div class="slot-lbl">Pose 2</div>
-            <img alt="">
-            <button class="slot-clear">✕</button>
-            <span class="slot-check">✓</span>
-          </div>
-          <div class="slot" data-key="pose_3">
-            <div class="slot-num">3</div>
-            <div class="slot-lbl">Pose 3</div>
-            <img alt="">
-            <button class="slot-clear">✕</button>
-            <span class="slot-check">✓</span>
-          </div>
-          <div class="slot" data-key="pose_4">
-            <div class="slot-num">4</div>
-            <div class="slot-lbl">Pose 4</div>
-            <img alt="">
-            <button class="slot-clear">✕</button>
-            <span class="slot-check">✓</span>
-          </div>
-          <div class="slot" data-key="pose_5">
-            <div class="slot-num">5</div>
-            <div class="slot-lbl">Pose 5</div>
-            <img alt="">
-            <button class="slot-clear">✕</button>
-            <span class="slot-check">✓</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Footer: progress + submit -->
-      <div class="setup-foot">
-        <div class="prog-track">
-          <div class="prog-fill" id="prog-fill"></div>
-        </div>
-        <div class="prog-row">
-          <span id="prog-text">0 of 7 images</span>
-          <span id="prog-pct">0%</span>
-        </div>
-        <button class="btn-primary" id="setup-btn" disabled>Complete Setup</button>
-      </div>
-
-    </div>
-  </div>
-
-
-  <!-- ╔══════════════════════════════════════════════════════╗
-       ║  MONITOR VIEW                                       ║
-       ╚══════════════════════════════════════════════════════╝ -->
-  <div id="mon-view">
-
-    <div class="feed-wrap">
-      <video id="mon-video" autoplay playsinline muted></video>
     </div>
 
     <div class="sidebar">
+
+      <div id="calib-chip">
+        <div class="chip-dot"></div>
+        Calibrating…
+      </div>
 
       <div class="stat-card" id="phone-card">
         <div class="stat-dot" id="phone-dot"></div>
@@ -650,221 +351,112 @@
       <div class="stat-card" id="dist-card">
         <div class="stat-dot" id="dist-dot"></div>
         <div class="stat-info">
-          <div class="stat-name">State</div>
+          <div class="stat-name">Attention</div>
           <div class="stat-val" id="dist-val">Focused</div>
         </div>
       </div>
 
       <div class="ctrl-card">
-        <button class="btn-green" id="mon-btn">Start Monitoring</button>
-        <button class="btn-ghost" id="recfg-btn">↺ Reconfigure</button>
+        <button class="btn-start" id="mon-btn">Start Monitoring</button>
       </div>
 
     </div>
   </div>
-
 </main>
 
 <div id="toast"></div>
 
 <script>
-// ── Constants ──────────────────────────────────────────────────────────────
-const KEYS = ['phone_front','phone_back','pose_1','pose_2','pose_3','pose_4','pose_5'];
-
 // ── State ──────────────────────────────────────────────────────────────────
-const blobs = {};
-let activeKey  = null;
-let stream     = null;
 let monitoring = false;
 let pollId     = null;
 
-// ── DOM refs ───────────────────────────────────────────────────────────────
-const cfgView  = document.getElementById('cfg-view');
-const monView  = document.getElementById('mon-view');
-const cfgVideo = document.getElementById('cfg-video');
-const monVideo = document.getElementById('mon-video');
-const canvas   = document.getElementById('snap-canvas');
-const snapBtn  = document.getElementById('snap-btn');
-const uploadBtn= document.getElementById('upload-btn');
-const fileIn   = document.getElementById('file-input');
-const setupBtn = document.getElementById('setup-btn');
-const progFill = document.getElementById('prog-fill');
-const progText = document.getElementById('prog-text');
-const progPct  = document.getElementById('prog-pct');
-const camHint  = document.getElementById('cam-hint');
-const monBtn   = document.getElementById('mon-btn');
-const recfgBtn = document.getElementById('recfg-btn');
-const pill1    = document.getElementById('pill-1');
-const pill2    = document.getElementById('pill-2');
+// ── DOM ────────────────────────────────────────────────────────────────────
+const monBtn = document.getElementById('mon-btn');
+const badge  = document.getElementById('status-badge');
+
+// ── Webcam ─────────────────────────────────────────────────────────────────
+navigator.mediaDevices.getUserMedia({ video: true, audio: false })
+  .then(stream => { document.getElementById('video').srcObject = stream; })
+  .catch(() => toast('Could not access webcam', true));
 
 // ── Toast ──────────────────────────────────────────────────────────────────
-let _toastT;
+let _tt;
 function toast(msg, err = false) {
   const el = document.getElementById('toast');
   el.textContent = msg;
   el.classList.toggle('err', err);
   el.classList.add('show');
-  clearTimeout(_toastT);
-  _toastT = setTimeout(() => el.classList.remove('show'), 3000);
+  clearTimeout(_tt);
+  _tt = setTimeout(() => el.classList.remove('show'), 3000);
 }
 
-// ── Webcam ─────────────────────────────────────────────────────────────────
-async function initCam() {
-  try {
-    stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
-    cfgVideo.srcObject = stream;
-  } catch {
-    toast('Webcam unavailable — upload images manually', true);
-  }
+// ── Controls ───────────────────────────────────────────────────────────────
+monBtn.addEventListener('click', () => monitoring ? stop() : start());
+
+// ── Calibration progress bar (client-side estimate, ~45 frames @ 30fps ≈ 1.5s) ──
+const CALIB_MS  = 1800;   // slightly longer than backend to avoid early hide
+let _calibTimer = null;
+let _calibStart = 0;
+
+function startCalibUI() {
+  const bar = document.getElementById('calib-bar');
+  bar.style.width = '0%';
+  document.getElementById('calib-overlay').classList.add('visible');
+  document.getElementById('calib-chip').classList.add('visible');
+  _calibStart = performance.now();
+  _calibTimer = setInterval(() => {
+    const pct = Math.min(((performance.now() - _calibStart) / CALIB_MS) * 100, 95);
+    bar.style.width = pct + '%';
+  }, 50);
 }
 
-// ── Slot management ────────────────────────────────────────────────────────
-const slotEl = k => document.querySelector(`.slot[data-key="${k}"]`);
-
-document.querySelectorAll('.slot').forEach(el => {
-  el.addEventListener('click', e => {
-    if (e.target.classList.contains('slot-clear')) return;
-    activate(el.dataset.key);
-  });
-});
-
-document.querySelectorAll('.slot-clear').forEach(btn => {
-  btn.addEventListener('click', e => {
-    e.stopPropagation();
-    clearSlot(btn.closest('.slot').dataset.key);
-  });
-});
-
-function activate(key) {
-  document.querySelectorAll('.slot').forEach(s => s.classList.remove('sel'));
-  const el = slotEl(key);
-  el.classList.add('sel');
-  activeKey = key;
-  const lbl = el.querySelector('.slot-lbl').textContent;
-  camHint.textContent = `Active: ${lbl} — snap or upload`;
-  snapBtn.disabled = !stream;
+function stopCalibUI() {
+  clearInterval(_calibTimer);
+  document.getElementById('calib-bar').style.width = '100%';
+  setTimeout(() => {
+    document.getElementById('calib-overlay').classList.remove('visible');
+    document.getElementById('calib-chip').classList.remove('visible');
+  }, 300);
 }
 
-function clearSlot(key) {
-  delete blobs[key];
-  const el = slotEl(key);
-  el.classList.remove('filled');
-  el.querySelector('img').src = '';
-  updateProg();
-}
-
-function storeBlob(key, blob) {
-  blobs[key] = blob;
-  const el = slotEl(key);
-  el.querySelector('img').src = URL.createObjectURL(blob);
-  el.classList.add('filled');
-  updateProg();
-  // auto-advance to next empty slot
-  const next = KEYS.find(k => !blobs[k]);
-  if (next) activate(next);
-  else { activeKey = null; camHint.textContent = 'All images captured!'; }
-}
-
-function updateProg() {
-  const n   = KEYS.filter(k => blobs[k]).length;
-  const pct = Math.round(n / KEYS.length * 100);
-  progFill.style.width   = pct + '%';
-  progText.textContent   = `${n} of ${KEYS.length} images`;
-  progPct.textContent    = pct + '%';
-  setupBtn.disabled      = n < KEYS.length;
-}
-
-// ── Snap ───────────────────────────────────────────────────────────────────
-snapBtn.addEventListener('click', () => {
-  if (!activeKey || !stream) return;
-  canvas.width  = cfgVideo.videoWidth  || 640;
-  canvas.height = cfgVideo.videoHeight || 480;
-  canvas.getContext('2d').drawImage(cfgVideo, 0, 0);
-  canvas.toBlob(b => b && storeBlob(activeKey, b), 'image/jpeg', 0.92);
-});
-
-// ── Upload ─────────────────────────────────────────────────────────────────
-uploadBtn.addEventListener('click', () => {
-  if (!activeKey) { toast('Select a slot first'); return; }
-  fileIn.click();
-});
-
-fileIn.addEventListener('change', () => {
-  if (!fileIn.files[0] || !activeKey) return;
-  storeBlob(activeKey, fileIn.files[0]);
-  fileIn.value = '';
-});
-
-// ── Submit config ──────────────────────────────────────────────────────────
-setupBtn.addEventListener('click', async () => {
-  if (KEYS.some(k => !blobs[k])) return;
-
-  setupBtn.disabled = true;
-  setupBtn.innerHTML = '<span class="spin"></span> Embedding…';
-
-  const fd = new FormData();
-  KEYS.forEach(k => fd.append(k, blobs[k], k + '.jpg'));
-
-  try {
-    const r = await fetch('/configure', { method: 'POST', body: fd });
-    const d = await r.json();
-    if (!r.ok) throw new Error(d.error || 'Configure failed');
-    toast(`Ready — ${d.embeddings_computed} embeddings stored`);
-    toMonitor();
-  } catch (e) {
-    toast(e.message, true);
-    setupBtn.disabled = false;
-    setupBtn.textContent = 'Complete Setup';
-  }
-});
-
-// ── View transitions ───────────────────────────────────────────────────────
-function toMonitor() {
-  cfgView.style.display  = 'none';
-  monView.style.display  = 'grid';
-  pill1.className = 'pill done';
-  pill2.className = 'pill active';
-  if (stream) monVideo.srcObject = stream;
-}
-
-function toConfig() {
-  if (monitoring) stopMon();
-  monView.style.display  = 'none';
-  cfgView.style.display  = 'grid';
-  pill1.className = 'pill active';
-  pill2.className = 'pill';
-  if (stream) cfgVideo.srcObject = stream;
-}
-
-// ── Monitoring ─────────────────────────────────────────────────────────────
-monBtn.addEventListener('click',   () => monitoring ? stopMon() : startMon());
-recfgBtn.addEventListener('click', toConfig);
-
-async function startMon() {
+async function start() {
   const r = await fetch('/start-monitoring', { method: 'POST' });
   const d = await r.json();
   if (!r.ok) { toast(d.error || 'Failed to start', true); return; }
   monitoring = true;
   monBtn.textContent = 'Stop Monitoring';
   monBtn.classList.add('stop');
+  badge.textContent = 'Monitoring';
+  badge.classList.add('running');
+  startCalibUI();                      // show immediately, don't wait for poll
   pollId = setInterval(poll, 1000);
 }
 
-async function stopMon() {
+async function stop() {
   clearInterval(pollId);
   await fetch('/stop-monitoring', { method: 'POST' });
   monitoring = false;
   monBtn.textContent = 'Start Monitoring';
   monBtn.classList.remove('stop');
+  badge.textContent = 'Idle';
+  badge.classList.remove('running');
+  stopCalibUI();
   setPhone(false);
-  setDist(false);
+  setDist(false, false);
 }
+
+// ── Status polling ─────────────────────────────────────────────────────────
+let _wasCalibrating = true;
 
 async function poll() {
   try {
     const d = await (await fetch('/status')).json();
     setPhone(d.phone);
-    setDist(d.eyes_off);
+    setDist(d.eyes_off, d.calibrating);
+    // Hide overlay as soon as backend confirms calibration is done
+    if (_wasCalibrating && !d.calibrating) stopCalibUI();
+    _wasCalibrating = !!d.calibrating;
   } catch {}
 }
 
@@ -874,14 +466,13 @@ function setPhone(on) {
   document.getElementById('phone-val').textContent = on ? 'Detected' : 'Not detected';
 }
 
-function setDist(on) {
-  document.getElementById('dist-dot').classList.toggle('on', on);
-  document.getElementById('dist-card').classList.toggle('alert', on);
-  document.getElementById('dist-val').textContent = on ? 'Distracted' : 'Focused';
+function setDist(on, calibrating) {
+  const active = on && !calibrating;
+  document.getElementById('dist-dot').classList.toggle('on', active);
+  document.getElementById('dist-card').classList.toggle('alert', active);
+  document.getElementById('dist-val').textContent =
+    calibrating ? 'Calibrating…' : (on ? 'Distracted' : 'Focused');
 }
-
-// ── Boot ───────────────────────────────────────────────────────────────────
-initCam().then(() => activate('phone_front'));
 </script>
 
 </body>
