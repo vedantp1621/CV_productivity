@@ -1,19 +1,27 @@
-from flask import Blueprint, render_template, request, current_app, jsonify
+import cv2
+import numpy as np
 import os
 import threading
 import base64
 from datetime import datetime
 
+from flask import Blueprint, render_template, request, current_app, jsonify
+
 from background.capture import capture_loop
-from background.predictor import yolo_loop
-from background.gaze import gaze_loop
-from background.shared import monitoring_active, detection_state, detection_lock
+from background.unified_detector import unified_loop
+from background.shared import (
+    monitoring_active,
+    detection_state,
+    detection_lock,
+    config_complete,
+    reference_embeddings,
+)
+from model.embedder import embed_image
 
 main = Blueprint('main', __name__)
 
 _capture_thread = None
-_yolo_thread = None
-_gaze_thread = None
+_detector_thread = None
 
 
 @main.route("/")
@@ -48,9 +56,47 @@ def capture():
     return jsonify({"message": f"Saved: {filename}", "count": image_count})
 
 
+@main.route("/configure", methods=["POST"])
+def configure():
+    phone_keys = ["phone_front", "phone_back"]
+    pose_keys = [f"pose_{i}" for i in range(1, 6)]
+
+    phone_embeddings = []
+    pose_embeddings = []
+
+    for key in phone_keys:
+        f = request.files.get(key)
+        if f is None:
+            return jsonify({"error": f"Missing file: {key}"}), 400
+        data = np.frombuffer(f.read(), dtype=np.uint8)
+        frame = cv2.imdecode(data, cv2.IMREAD_COLOR)
+        if frame is None:
+            return jsonify({"error": f"Could not decode image: {key}"}), 400
+        phone_embeddings.append(embed_image(frame))
+
+    for key in pose_keys:
+        f = request.files.get(key)
+        if f is None:
+            return jsonify({"error": f"Missing file: {key}"}), 400
+        data = np.frombuffer(f.read(), dtype=np.uint8)
+        frame = cv2.imdecode(data, cv2.IMREAD_COLOR)
+        if frame is None:
+            return jsonify({"error": f"Could not decode image: {key}"}), 400
+        pose_embeddings.append(embed_image(frame))
+
+    reference_embeddings["phone"] = phone_embeddings
+    reference_embeddings["pose"] = pose_embeddings
+    config_complete.set()
+
+    return jsonify({"status": "ok", "embeddings_computed": len(phone_embeddings) + len(pose_embeddings)})
+
+
 @main.route("/start-monitoring", methods=["POST"])
 def start_monitoring():
-    global _capture_thread, _yolo_thread, _gaze_thread
+    global _capture_thread, _detector_thread
+
+    if not config_complete.is_set():
+        return jsonify({"error": "Run /configure first"}), 400
 
     if monitoring_active.is_set():
         return jsonify({"status": "already running"})
@@ -62,12 +108,10 @@ def start_monitoring():
     _capture_thread = threading.Thread(
         target=capture_loop, args=(webcam_index,), daemon=True
     )
-    _yolo_thread = threading.Thread(target=yolo_loop, daemon=True)
-    _gaze_thread = threading.Thread(target=gaze_loop, daemon=True)
+    _detector_thread = threading.Thread(target=unified_loop, daemon=True)
 
     _capture_thread.start()
-    _yolo_thread.start()
-    _gaze_thread.start()
+    _detector_thread.start()
 
     return jsonify({"status": "started"})
 
@@ -82,11 +126,3 @@ def status():
 def stop_monitoring():
     monitoring_active.clear()
     return jsonify({"status": "stopped"})
-
-
-@main.route("/test", methods=["POST"])
-def test():
-    return jsonify({
-        "status": "YOLO detection is now part of the monitoring pipeline.",
-        "hint": "POST to /start-monitoring to begin real-time detection."
-    })

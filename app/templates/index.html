@@ -1,198 +1,888 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <title>Focus Tracker Dashboard</title>
-    <style>
-      body {
-        font-family: sans-serif;
-        max-width: 680px;
-        margin: 40px auto;
-        padding: 20px;
-        background-color: #f4f4f4;
-        border-radius: 10px;
-      }
-      h1 { text-align: center; }
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Focus Tracker</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-      /* ── Indicator lights ── */
-      .indicators {
-        display: flex;
-        gap: 16px;
-        align-items: center;
-        margin-bottom: 8px;
-      }
-      .indicator {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        font-size: 14px;
-        font-weight: bold;
-        color: #555;
-      }
-      .dot {
-        width: 16px;
-        height: 16px;
-        border-radius: 50%;
-        background-color: #ccc;
-        transition: background-color 0.2s;
-      }
-      .dot.active-red  { background-color: #e53935; animation: blink 0.7s infinite; }
-      .dot.active-green { background-color: #43a047; animation: blink 0.7s infinite; }
+    :root {
+      --bg:          #0a0a0b;
+      --surface:     #111114;
+      --surface-2:   #1a1a1f;
+      --border:      #2a2a30;
+      --border-2:    #3a3a42;
+      --text:        #f0f0f2;
+      --muted:       #666672;
+      --accent:      #4f7eff;
+      --accent-dim:  rgba(79,126,255,.14);
+      --green:       #22c55e;
+      --green-dim:   rgba(34,197,94,.12);
+      --green-ring:  rgba(34,197,94,.35);
+      --red:         #ef4444;
+      --red-dim:     rgba(239,68,68,.10);
+      --red-ring:    rgba(239,68,68,.35);
+      --r:           10px;
+      --r-sm:        6px;
+    }
 
-      @keyframes blink {
-        0%, 100% { opacity: 1; }
-        50%       { opacity: 0.2; }
-      }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      font-size: 14px;
+    }
 
-      /* ── Webcam ── */
-      #video { display: block; border-radius: 6px; }
+    /* ── Header ──────────────────────────────────────────────────── */
+    header {
+      height: 52px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
 
-      /* ── Buttons & forms ── */
-      button, input[type="submit"] {
-        padding: 10px 20px;
-        background-color: #4caf50;
-        color: white;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-        margin-top: 10px;
-      }
-      #confirmation {
-        color: green;
-        margin-top: 10px;
-        font-weight: bold;
-      }
-      #status-message {
-        margin-top: 10px;
-        font-weight: bold;
-        color: green;
-      }
-      form {
-        margin-bottom: 20px;
-        padding: 15px;
-        background-color: #fff;
-        border-radius: 8px;
-      }
-    </style>
-  </head>
-  <body>
-    <h1>Focus Tracker Dashboard</h1>
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      font-weight: 600;
+      font-size: 13px;
+      letter-spacing: -.01em;
+    }
 
-    <!-- Detection indicator lights -->
-    <div class="indicators">
-      <div class="indicator">
-        <div class="dot" id="phone-dot"></div>
-        Phone detected
+    .logo-mark {
+      width: 26px;
+      height: 26px;
+      background: var(--accent);
+      border-radius: 7px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: 0;
+      flex-shrink: 0;
+    }
+
+    .steps {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .pill {
+      padding: 3px 11px;
+      border-radius: 99px;
+      font-size: 11.5px;
+      font-weight: 500;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      transition: all .2s;
+    }
+    .pill.active  { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .pill.done    { background: var(--green-dim); border-color: var(--green-ring); color: var(--green); }
+    .step-arrow   { color: var(--border-2); font-size: 12px; }
+
+    /* ── Main ────────────────────────────────────────────────────── */
+    main {
+      flex: 1;
+      padding: 24px;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+    }
+
+    /* ─────────────────────────────────────────────────────────────
+       CONFIG VIEW
+    ───────────────────────────────────────────────────────────── */
+    #cfg-view {
+      width: 100%;
+      max-width: 980px;
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      gap: 20px;
+      align-items: start;
+    }
+
+    /* Webcam column */
+    .webcam-col {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      position: sticky;
+      top: 24px;
+    }
+
+    .cam-wrap {
+      background: #000;
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      overflow: hidden;
+      position: relative;
+      aspect-ratio: 4/3;
+    }
+
+    .cam-wrap video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .cam-footer {
+      position: absolute;
+      inset-x: 0;
+      bottom: 0;
+      padding: 20px 10px 8px;
+      background: linear-gradient(transparent, rgba(0,0,0,.65));
+      font-size: 11px;
+      color: rgba(255,255,255,.55);
+      text-align: center;
+      pointer-events: none;
+    }
+
+    .action-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .act-btn {
+      padding: 8px 10px;
+      border-radius: var(--r-sm);
+      font-size: 12.5px;
+      font-weight: 500;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      background: var(--surface-2);
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      transition: border-color .15s, background .15s;
+      font-family: inherit;
+    }
+    .act-btn:hover:not(:disabled) { border-color: var(--border-2); background: #22222a; }
+    .act-btn:disabled { opacity: .3; cursor: not-allowed; }
+
+    /* Slots column */
+    .slots-col {
+      display: flex;
+      flex-direction: column;
+      gap: 22px;
+    }
+
+    .section-head {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .section-label {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: .07em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .section-hint {
+      font-size: 11px;
+      color: var(--muted);
+      opacity: .6;
+    }
+
+    .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .grid-5 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
+
+    /* Individual slot */
+    .slot {
+      aspect-ratio: 3/4;
+      border: 2px dashed var(--border);
+      border-radius: var(--r-sm);
+      background: var(--surface);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      transition: border-color .15s, box-shadow .15s;
+      min-width: 0;
+      user-select: none;
+    }
+    .slot:hover                 { border-color: var(--border-2); }
+    .slot.sel                   { border-color: var(--accent); border-style: solid;
+                                  box-shadow: 0 0 0 3px var(--accent-dim); }
+    .slot.filled                { border-color: var(--green); border-style: solid; }
+
+    .slot-num {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      border: 1.5px solid var(--border-2);
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 5px;
+    }
+
+    .slot-lbl {
+      font-size: 9px;
+      color: var(--muted);
+      text-align: center;
+      padding: 0 4px;
+      line-height: 1.3;
+    }
+
+    .slot img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: none;
+    }
+    .slot.filled img { display: block; }
+
+    .slot-clear {
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: rgba(0,0,0,.6);
+      border: none;
+      color: #fff;
+      font-size: 9px;
+      cursor: pointer;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 2;
+      font-family: inherit;
+    }
+    .slot.filled .slot-clear { display: flex; }
+
+    .slot-check {
+      position: absolute;
+      bottom: 4px;
+      right: 4px;
+      width: 15px;
+      height: 15px;
+      border-radius: 50%;
+      background: var(--green);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      font-size: 8px;
+      color: #fff;
+      font-weight: 700;
+    }
+    .slot.filled .slot-check { display: flex; }
+
+    /* Setup footer */
+    .setup-foot {
+      border-top: 1px solid var(--border);
+      padding-top: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .prog-track {
+      height: 3px;
+      background: var(--surface-2);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .prog-fill {
+      height: 100%;
+      background: var(--accent);
+      width: 0%;
+      border-radius: 2px;
+      transition: width .3s ease;
+    }
+
+    .prog-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11.5px;
+      color: var(--muted);
+    }
+
+    /* ─────────────────────────────────────────────────────────────
+       MONITOR VIEW
+    ───────────────────────────────────────────────────────────── */
+    #mon-view {
+      display: none;
+      width: 100%;
+      max-width: 980px;
+      grid-template-columns: 1fr 256px;
+      gap: 20px;
+      align-items: start;
+    }
+
+    .feed-wrap {
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      overflow: hidden;
+      background: #000;
+      aspect-ratio: 4/3;
+    }
+    .feed-wrap video { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+    .sidebar {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      position: sticky;
+      top: 24px;
+    }
+
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      transition: border-color .3s, background .3s;
+    }
+    .stat-card.alert {
+      border-color: rgba(239,68,68,.45);
+      background: var(--red-dim);
+    }
+
+    .stat-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--border-2);
+      flex-shrink: 0;
+      transition: background .3s, box-shadow .3s;
+    }
+    .stat-dot.on {
+      background: var(--red);
+      box-shadow: 0 0 0 3px var(--red-ring);
+      animation: pulse 1.8s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%,100% { box-shadow: 0 0 0 3px var(--red-ring); }
+      50%      { box-shadow: 0 0 0 6px rgba(239,68,68,0); }
+    }
+
+    .stat-info { flex: 1; min-width: 0; }
+    .stat-name {
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .07em;
+      color: var(--muted);
+    }
+    .stat-val {
+      font-size: 14px;
+      font-weight: 600;
+      margin-top: 2px;
+      transition: color .3s;
+    }
+    .stat-card.alert .stat-val { color: var(--red); }
+
+    .ctrl-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    /* ── Universal buttons ───────────────────────────────────────── */
+    .btn-primary {
+      width: 100%;
+      padding: 10px;
+      border: none;
+      border-radius: var(--r-sm);
+      background: var(--accent);
+      color: #fff;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      transition: background .15s, opacity .15s;
+      font-family: inherit;
+    }
+    .btn-primary:hover:not(:disabled) { background: #3d6de8; }
+    .btn-primary:disabled { background: var(--surface-2); color: var(--muted); cursor: not-allowed; }
+
+    .btn-green {
+      width: 100%;
+      padding: 10px;
+      border: none;
+      border-radius: var(--r-sm);
+      background: var(--green);
+      color: #fff;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: filter .15s;
+      font-family: inherit;
+    }
+    .btn-green:hover { filter: brightness(1.08); }
+    .btn-green.stop  {
+      background: var(--red-dim);
+      color: var(--red);
+      border: 1px solid var(--red-ring);
+    }
+
+    .btn-ghost {
+      width: 100%;
+      padding: 9px;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: var(--r-sm);
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: border-color .15s, color .15s;
+      font-family: inherit;
+    }
+    .btn-ghost:hover { border-color: var(--border-2); color: var(--text); }
+
+    /* ── Toast ───────────────────────────────────────────────────── */
+    #toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      max-width: 280px;
+      padding: 9px 15px;
+      background: var(--surface-2);
+      border: 1px solid var(--border-2);
+      border-radius: var(--r-sm);
+      font-size: 12.5px;
+      line-height: 1.45;
+      opacity: 0;
+      transform: translateY(5px);
+      transition: opacity .18s, transform .18s;
+      pointer-events: none;
+      z-index: 99;
+    }
+    #toast.show { opacity: 1; transform: none; }
+    #toast.err  { border-color: rgba(239,68,68,.5); }
+
+    /* ── Spinner ─────────────────────────────────────────────────── */
+    .spin {
+      width: 13px; height: 13px;
+      border: 2px solid rgba(255,255,255,.25);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: rot .55s linear infinite;
+      display: inline-block;
+      flex-shrink: 0;
+    }
+    @keyframes rot { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-mark">FT</div>
+    Focus Tracker
+  </div>
+  <div class="steps">
+    <span class="pill active" id="pill-1">1 · Configure</span>
+    <span class="step-arrow">›</span>
+    <span class="pill" id="pill-2">2 · Monitor</span>
+  </div>
+</header>
+
+<main>
+
+  <!-- ╔══════════════════════════════════════════════════════╗
+       ║  CONFIG VIEW                                        ║
+       ╚══════════════════════════════════════════════════════╝ -->
+  <div id="cfg-view">
+
+    <!-- Left: live webcam + actions -->
+    <div class="webcam-col">
+      <div class="cam-wrap">
+        <video id="cfg-video" autoplay playsinline muted></video>
+        <div class="cam-footer" id="cam-hint">Select a slot to activate it</div>
       </div>
-      <div class="indicator">
-        <div class="dot" id="gaze-dot"></div>
-        Eyes off screen
+
+      <div class="action-row">
+        <button class="act-btn" id="snap-btn" disabled>📷 Snap</button>
+        <button class="act-btn" id="upload-btn">📁 Upload</button>
       </div>
+      <input type="file" id="file-input" accept="image/*" style="display:none">
+      <canvas id="snap-canvas" style="display:none"></canvas>
     </div>
 
-    <!-- Webcam feed -->
-    <video id="video" width="640" height="480" autoplay></video>
+    <!-- Right: slots + progress -->
+    <div class="slots-col">
 
-    <br/>
+      <!-- Phone -->
+      <div>
+        <div class="section-head">
+          <span class="section-label">Your Phone</span>
+          <span class="section-hint">front and back</span>
+        </div>
+        <div class="grid-2">
+          <div class="slot" data-key="phone_front">
+            <div class="slot-num">1</div>
+            <div class="slot-lbl">Front</div>
+            <img alt="">
+            <button class="slot-clear">✕</button>
+            <span class="slot-check">✓</span>
+          </div>
+          <div class="slot" data-key="phone_back">
+            <div class="slot-num">2</div>
+            <div class="slot-lbl">Back</div>
+            <img alt="">
+            <button class="slot-clear">✕</button>
+            <span class="slot-check">✓</span>
+          </div>
+        </div>
+      </div>
 
-    <!-- Capture -->
-    <form id="capture-form">
-      <button type="button" onclick="captureFrame()">Capture</button>
-    </form>
-    <div id="confirmation" style="display:none"></div>
+      <!-- Poses -->
+      <div>
+        <div class="section-head">
+          <span class="section-label">Your Distracted Poses</span>
+          <span class="section-hint">5 different poses while not focused</span>
+        </div>
+        <div class="grid-5">
+          <div class="slot" data-key="pose_1">
+            <div class="slot-num">1</div>
+            <div class="slot-lbl">Pose 1</div>
+            <img alt="">
+            <button class="slot-clear">✕</button>
+            <span class="slot-check">✓</span>
+          </div>
+          <div class="slot" data-key="pose_2">
+            <div class="slot-num">2</div>
+            <div class="slot-lbl">Pose 2</div>
+            <img alt="">
+            <button class="slot-clear">✕</button>
+            <span class="slot-check">✓</span>
+          </div>
+          <div class="slot" data-key="pose_3">
+            <div class="slot-num">3</div>
+            <div class="slot-lbl">Pose 3</div>
+            <img alt="">
+            <button class="slot-clear">✕</button>
+            <span class="slot-check">✓</span>
+          </div>
+          <div class="slot" data-key="pose_4">
+            <div class="slot-num">4</div>
+            <div class="slot-lbl">Pose 4</div>
+            <img alt="">
+            <button class="slot-clear">✕</button>
+            <span class="slot-check">✓</span>
+          </div>
+          <div class="slot" data-key="pose_5">
+            <div class="slot-num">5</div>
+            <div class="slot-lbl">Pose 5</div>
+            <img alt="">
+            <button class="slot-clear">✕</button>
+            <span class="slot-check">✓</span>
+          </div>
+        </div>
+      </div>
 
-    <canvas id="canvas" width="640" height="480" style="display:none"></canvas>
+      <!-- Footer: progress + submit -->
+      <div class="setup-foot">
+        <div class="prog-track">
+          <div class="prog-fill" id="prog-fill"></div>
+        </div>
+        <div class="prog-row">
+          <span id="prog-text">0 of 7 images</span>
+          <span id="prog-pct">0%</span>
+        </div>
+        <button class="btn-primary" id="setup-btn" disabled>Complete Setup</button>
+      </div>
 
-    <!-- Monitoring controls -->
-    <div>
-      <button id="start-btn">Start Monitoring</button>
-      <button id="stop-btn" style="background-color:#e53935; display:none">Stop Monitoring</button>
-      <p id="status-message" style="display:none"></p>
+    </div>
+  </div>
+
+
+  <!-- ╔══════════════════════════════════════════════════════╗
+       ║  MONITOR VIEW                                       ║
+       ╚══════════════════════════════════════════════════════╝ -->
+  <div id="mon-view">
+
+    <div class="feed-wrap">
+      <video id="mon-video" autoplay playsinline muted></video>
     </div>
 
-    <!-- Train / Test -->
-    <form action="/train" method="POST">
-      <h3>TODO: Train Model</h3>
-      <input type="submit" value="Train" />
-    </form>
-    <form action="/test" method="POST">
-      <h3>Test Buttons</h3>
-      <input type="submit" value="Start" />
-    </form>
+    <div class="sidebar">
 
-    <script>
-      // ── Webcam ──────────────────────────────────────────────
-      const video = document.getElementById("video");
-      const canvas = document.getElementById("canvas");
-      const confirmation = document.getElementById("confirmation");
+      <div class="stat-card" id="phone-card">
+        <div class="stat-dot" id="phone-dot"></div>
+        <div class="stat-info">
+          <div class="stat-name">Phone</div>
+          <div class="stat-val" id="phone-val">Not detected</div>
+        </div>
+      </div>
 
-      navigator.mediaDevices.getUserMedia({ video: true }).then((stream) => {
-        video.srcObject = stream;
-      });
+      <div class="stat-card" id="dist-card">
+        <div class="stat-dot" id="dist-dot"></div>
+        <div class="stat-info">
+          <div class="stat-name">State</div>
+          <div class="stat-val" id="dist-val">Focused</div>
+        </div>
+      </div>
 
-      function captureFrame() {
-        const ctx = canvas.getContext("2d");
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-        const dataUrl = canvas.toDataURL("image/jpeg", 0.7);
+      <div class="ctrl-card">
+        <button class="btn-green" id="mon-btn">Start Monitoring</button>
+        <button class="btn-ghost" id="recfg-btn">↺ Reconfigure</button>
+      </div>
 
-        fetch("/capture", {
-          method: "POST",
-          headers: { "Content-Type": "application/x-www-form-urlencoded" },
-          body: "image=" + encodeURIComponent(dataUrl),
-        })
-          .then((res) => res.json())
-          .then((data) => {
-            confirmation.style.display = "block";
-            confirmation.textContent = "✅ " + data.message;
-            setTimeout(() => { confirmation.style.display = "none"; }, 5000);
-          });
-      }
+    </div>
+  </div>
 
-      // ── Monitoring controls ─────────────────────────────────
-      const startBtn = document.getElementById("start-btn");
-      const stopBtn  = document.getElementById("stop-btn");
-      const statusMsg = document.getElementById("status-message");
+</main>
 
-      startBtn.addEventListener("click", () => {
-        fetch("/start-monitoring", { method: "POST" })
-          .then((res) => res.json())
-          .then((data) => {
-            statusMsg.style.display = "block";
-            statusMsg.style.color = "green";
-            statusMsg.textContent =
-              data.status === "started" ? "✅ Monitoring started." : "⚠️ Already running.";
-            startBtn.style.display = "none";
-            stopBtn.style.display  = "inline-block";
-          });
-      });
+<div id="toast"></div>
 
-      stopBtn.addEventListener("click", () => {
-        fetch("/stop-monitoring", { method: "POST" })
-          .then((res) => res.json())
-          .then(() => {
-            statusMsg.style.display = "block";
-            statusMsg.style.color = "#555";
-            statusMsg.textContent = "Monitoring stopped.";
-            startBtn.style.display = "inline-block";
-            stopBtn.style.display  = "none";
-          });
-      });
+<script>
+// ── Constants ──────────────────────────────────────────────────────────────
+const KEYS = ['phone_front','phone_back','pose_1','pose_2','pose_3','pose_4','pose_5'];
 
-      // ── Detection indicator polling ─────────────────────────
-      const phoneDot = document.getElementById("phone-dot");
-      const gazeDot  = document.getElementById("gaze-dot");
+// ── State ──────────────────────────────────────────────────────────────────
+const blobs = {};
+let activeKey  = null;
+let stream     = null;
+let monitoring = false;
+let pollId     = null;
 
-      function updateIndicators() {
-        fetch("/status")
-          .then((res) => res.json())
-          .then((data) => {
-            phoneDot.className = "dot" + (data.phone     ? " active-red"   : "");
-            gazeDot.className  = "dot" + (data.eyes_off  ? " active-green" : "");
-          })
-          .catch(() => {}); // silently ignore if server not ready
-      }
+// ── DOM refs ───────────────────────────────────────────────────────────────
+const cfgView  = document.getElementById('cfg-view');
+const monView  = document.getElementById('mon-view');
+const cfgVideo = document.getElementById('cfg-video');
+const monVideo = document.getElementById('mon-video');
+const canvas   = document.getElementById('snap-canvas');
+const snapBtn  = document.getElementById('snap-btn');
+const uploadBtn= document.getElementById('upload-btn');
+const fileIn   = document.getElementById('file-input');
+const setupBtn = document.getElementById('setup-btn');
+const progFill = document.getElementById('prog-fill');
+const progText = document.getElementById('prog-text');
+const progPct  = document.getElementById('prog-pct');
+const camHint  = document.getElementById('cam-hint');
+const monBtn   = document.getElementById('mon-btn');
+const recfgBtn = document.getElementById('recfg-btn');
+const pill1    = document.getElementById('pill-1');
+const pill2    = document.getElementById('pill-2');
 
-      setInterval(updateIndicators, 1000);
-    </script>
-  </body>
+// ── Toast ──────────────────────────────────────────────────────────────────
+let _toastT;
+function toast(msg, err = false) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.toggle('err', err);
+  el.classList.add('show');
+  clearTimeout(_toastT);
+  _toastT = setTimeout(() => el.classList.remove('show'), 3000);
+}
+
+// ── Webcam ─────────────────────────────────────────────────────────────────
+async function initCam() {
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+    cfgVideo.srcObject = stream;
+  } catch {
+    toast('Webcam unavailable — upload images manually', true);
+  }
+}
+
+// ── Slot management ────────────────────────────────────────────────────────
+const slotEl = k => document.querySelector(`.slot[data-key="${k}"]`);
+
+document.querySelectorAll('.slot').forEach(el => {
+  el.addEventListener('click', e => {
+    if (e.target.classList.contains('slot-clear')) return;
+    activate(el.dataset.key);
+  });
+});
+
+document.querySelectorAll('.slot-clear').forEach(btn => {
+  btn.addEventListener('click', e => {
+    e.stopPropagation();
+    clearSlot(btn.closest('.slot').dataset.key);
+  });
+});
+
+function activate(key) {
+  document.querySelectorAll('.slot').forEach(s => s.classList.remove('sel'));
+  const el = slotEl(key);
+  el.classList.add('sel');
+  activeKey = key;
+  const lbl = el.querySelector('.slot-lbl').textContent;
+  camHint.textContent = `Active: ${lbl} — snap or upload`;
+  snapBtn.disabled = !stream;
+}
+
+function clearSlot(key) {
+  delete blobs[key];
+  const el = slotEl(key);
+  el.classList.remove('filled');
+  el.querySelector('img').src = '';
+  updateProg();
+}
+
+function storeBlob(key, blob) {
+  blobs[key] = blob;
+  const el = slotEl(key);
+  el.querySelector('img').src = URL.createObjectURL(blob);
+  el.classList.add('filled');
+  updateProg();
+  // auto-advance to next empty slot
+  const next = KEYS.find(k => !blobs[k]);
+  if (next) activate(next);
+  else { activeKey = null; camHint.textContent = 'All images captured!'; }
+}
+
+function updateProg() {
+  const n   = KEYS.filter(k => blobs[k]).length;
+  const pct = Math.round(n / KEYS.length * 100);
+  progFill.style.width   = pct + '%';
+  progText.textContent   = `${n} of ${KEYS.length} images`;
+  progPct.textContent    = pct + '%';
+  setupBtn.disabled      = n < KEYS.length;
+}
+
+// ── Snap ───────────────────────────────────────────────────────────────────
+snapBtn.addEventListener('click', () => {
+  if (!activeKey || !stream) return;
+  canvas.width  = cfgVideo.videoWidth  || 640;
+  canvas.height = cfgVideo.videoHeight || 480;
+  canvas.getContext('2d').drawImage(cfgVideo, 0, 0);
+  canvas.toBlob(b => b && storeBlob(activeKey, b), 'image/jpeg', 0.92);
+});
+
+// ── Upload ─────────────────────────────────────────────────────────────────
+uploadBtn.addEventListener('click', () => {
+  if (!activeKey) { toast('Select a slot first'); return; }
+  fileIn.click();
+});
+
+fileIn.addEventListener('change', () => {
+  if (!fileIn.files[0] || !activeKey) return;
+  storeBlob(activeKey, fileIn.files[0]);
+  fileIn.value = '';
+});
+
+// ── Submit config ──────────────────────────────────────────────────────────
+setupBtn.addEventListener('click', async () => {
+  if (KEYS.some(k => !blobs[k])) return;
+
+  setupBtn.disabled = true;
+  setupBtn.innerHTML = '<span class="spin"></span> Embedding…';
+
+  const fd = new FormData();
+  KEYS.forEach(k => fd.append(k, blobs[k], k + '.jpg'));
+
+  try {
+    const r = await fetch('/configure', { method: 'POST', body: fd });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error || 'Configure failed');
+    toast(`Ready — ${d.embeddings_computed} embeddings stored`);
+    toMonitor();
+  } catch (e) {
+    toast(e.message, true);
+    setupBtn.disabled = false;
+    setupBtn.textContent = 'Complete Setup';
+  }
+});
+
+// ── View transitions ───────────────────────────────────────────────────────
+function toMonitor() {
+  cfgView.style.display  = 'none';
+  monView.style.display  = 'grid';
+  pill1.className = 'pill done';
+  pill2.className = 'pill active';
+  if (stream) monVideo.srcObject = stream;
+}
+
+function toConfig() {
+  if (monitoring) stopMon();
+  monView.style.display  = 'none';
+  cfgView.style.display  = 'grid';
+  pill1.className = 'pill active';
+  pill2.className = 'pill';
+  if (stream) cfgVideo.srcObject = stream;
+}
+
+// ── Monitoring ─────────────────────────────────────────────────────────────
+monBtn.addEventListener('click',   () => monitoring ? stopMon() : startMon());
+recfgBtn.addEventListener('click', toConfig);
+
+async function startMon() {
+  const r = await fetch('/start-monitoring', { method: 'POST' });
+  const d = await r.json();
+  if (!r.ok) { toast(d.error || 'Failed to start', true); return; }
+  monitoring = true;
+  monBtn.textContent = 'Stop Monitoring';
+  monBtn.classList.add('stop');
+  pollId = setInterval(poll, 1000);
+}
+
+async function stopMon() {
+  clearInterval(pollId);
+  await fetch('/stop-monitoring', { method: 'POST' });
+  monitoring = false;
+  monBtn.textContent = 'Start Monitoring';
+  monBtn.classList.remove('stop');
+  setPhone(false);
+  setDist(false);
+}
+
+async function poll() {
+  try {
+    const d = await (await fetch('/status')).json();
+    setPhone(d.phone);
+    setDist(d.eyes_off);
+  } catch {}
+}
+
+function setPhone(on) {
+  document.getElementById('phone-dot').classList.toggle('on', on);
+  document.getElementById('phone-card').classList.toggle('alert', on);
+  document.getElementById('phone-val').textContent = on ? 'Detected' : 'Not detected';
+}
+
+function setDist(on) {
+  document.getElementById('dist-dot').classList.toggle('on', on);
+  document.getElementById('dist-card').classList.toggle('alert', on);
+  document.getElementById('dist-val').textContent = on ? 'Distracted' : 'Focused';
+}
+
+// ── Boot ───────────────────────────────────────────────────────────────────
+initCam().then(() => activate('phone_front'));
+</script>
+
+</body>
 </html>
