@@ -113,11 +113,26 @@
       aspect-ratio: 4/3;
       position: relative;
     }
-    .feed-card video {
+    .feed-card video,
+    .feed-card img {
       width: 100%;
       height: 100%;
       object-fit: cover;
       display: block;
+      position: absolute;
+      inset: 0;
+    }
+
+    .feed-label {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: rgba(240,240,242,.45);
+      pointer-events: none;
     }
 
     /* ── Calibration overlay ─────────────────────────────────────── */
@@ -234,6 +249,32 @@
     }
     .stat-card.alert .stat-val { color: var(--red); }
 
+    .stat-sub {
+      font-size: 10px;
+      color: var(--muted);
+      margin-top: 2px;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: .02em;
+      transition: color .3s;
+    }
+
+    .score-bar-track {
+      height: 3px;
+      background: var(--border);
+      border-radius: 2px;
+      margin-top: 8px;
+      overflow: hidden;
+      position: relative;
+    }
+    .score-bar-fill {
+      height: 100%;
+      width: 0%;
+      background: var(--green);
+      border-radius: 2px;
+      transition: width .2s linear, background .3s;
+    }
+    .score-bar-fill.alert { background: var(--red); }
+
     /* ── Controls ────────────────────────────────────────────────── */
     .ctrl-card {
       background: var(--surface);
@@ -261,6 +302,128 @@
       color: var(--red);
       border: 1px solid var(--red-ring);
     }
+
+    .btn-end {
+      width: 100%;
+      margin-top: 8px;
+      padding: 11px;
+      border: 1px solid var(--border-2);
+      border-radius: var(--r-sm);
+      background: transparent;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      transition: color .15s, border-color .15s, background .15s;
+    }
+    .btn-end:not(:disabled):hover {
+      color: var(--red);
+      border-color: var(--red-ring);
+      background: var(--red-dim);
+    }
+    .btn-end:disabled { opacity: 0.35; cursor: default; }
+
+    /* ── Summary view ────────────────────────────────────────────── */
+    #summary-view {
+      display: none;
+      width: 100%;
+      max-width: 640px;
+      flex-direction: column;
+      gap: 24px;
+    }
+    #summary-view.visible { display: flex; }
+
+    .summary-header {
+      text-align: center;
+    }
+    .summary-header h2 {
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: -.02em;
+    }
+    .summary-header p {
+      margin-top: 4px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+
+    .sum-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: 20px;
+    }
+    .sum-card .sum-label {
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .07em;
+      color: var(--muted);
+    }
+    .sum-card .sum-value {
+      font-size: 32px;
+      font-weight: 700;
+      letter-spacing: -.03em;
+      margin-top: 6px;
+      font-variant-numeric: tabular-nums;
+    }
+    .sum-card .sum-sub {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+    .sum-card.focused  .sum-value { color: var(--green); }
+    .sum-card.distracted .sum-value { color: var(--red); }
+    .sum-card.phone    .sum-value { color: var(--amber); }
+
+    .ratio-bar-wrap {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: 18px 20px;
+    }
+    .ratio-bar-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+    .ratio-bar-track {
+      width: 100%;
+      height: 8px;
+      background: var(--red-dim);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .ratio-bar-fill {
+      height: 100%;
+      background: var(--green);
+      border-radius: 4px;
+      transition: width .6s ease;
+    }
+
+    .btn-new-session {
+      width: 100%;
+      padding: 13px;
+      border: none;
+      border-radius: var(--r-sm);
+      background: var(--accent);
+      color: #fff;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      transition: filter .15s;
+    }
+    .btn-new-session:hover { filter: brightness(1.1); }
 
     /* ── Calibration sidebar chip ────────────────────────────────── */
     #calib-chip {
@@ -321,6 +484,8 @@
 
     <div class="feed-card">
       <video id="video" autoplay playsinline muted></video>
+      <img id="feed" src="" alt="Live CV Feed" style="display:none">
+      <div class="feed-label" id="feed-label" style="display:none">Live CV Feed</div>
       <div id="calib-overlay">
         <div class="calib-ring"></div>
         <div class="calib-text">
@@ -353,14 +518,62 @@
         <div class="stat-info">
           <div class="stat-name">Attention</div>
           <div class="stat-val" id="dist-val">Focused</div>
+          <div class="stat-sub" id="dist-angles">—</div>
+          <div class="score-bar-track">
+            <div class="score-bar-fill" id="score-bar"></div>
+          </div>
         </div>
       </div>
 
       <div class="ctrl-card">
         <button class="btn-start" id="mon-btn">Start Monitoring</button>
+        <button class="btn-end" id="end-btn" disabled>End Session</button>
       </div>
 
     </div>
+  </div>
+
+  <div id="summary-view">
+    <div class="summary-header">
+      <h2>Session Summary</h2>
+      <p id="summary-subtitle">Here's how your focus session went.</p>
+    </div>
+
+    <div class="summary-grid">
+      <div class="sum-card">
+        <div class="sum-label">Total Duration</div>
+        <div class="sum-value" id="sum-total">—</div>
+        <div class="sum-sub">full session length</div>
+      </div>
+      <div class="sum-card focused">
+        <div class="sum-label">Focused</div>
+        <div class="sum-value" id="sum-focused">—</div>
+        <div class="sum-sub">eyes on screen</div>
+      </div>
+      <div class="sum-card distracted">
+        <div class="sum-label">Distracted</div>
+        <div class="sum-value" id="sum-distracted">—</div>
+        <div class="sum-sub">head turned away</div>
+      </div>
+      <div class="sum-card phone">
+        <div class="sum-label">Phone Visible</div>
+        <div class="sum-value" id="sum-phone">—</div>
+        <div class="sum-sub">device in frame</div>
+      </div>
+    </div>
+
+    <div class="ratio-bar-wrap">
+      <div class="ratio-bar-label">
+        <span>Focused</span>
+        <span id="ratio-label">—</span>
+        <span>Distracted</span>
+      </div>
+      <div class="ratio-bar-track">
+        <div class="ratio-bar-fill" id="ratio-fill" style="width:0%"></div>
+      </div>
+    </div>
+
+    <button class="btn-new-session" onclick="window.location.reload()">Start New Session</button>
   </div>
 </main>
 
@@ -373,12 +586,20 @@ let pollId     = null;
 
 // ── DOM ────────────────────────────────────────────────────────────────────
 const monBtn = document.getElementById('mon-btn');
+const endBtn = document.getElementById('end-btn');
 const badge  = document.getElementById('status-badge');
 
-// ── Webcam ─────────────────────────────────────────────────────────────────
+// ── Helpers ────────────────────────────────────────────────────────────────
+function formatTime(seconds) {
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return `${m}:${s.toString().padStart(2, '0')}`;
+}
+
+// ── Webcam preview (raw, shown before monitoring starts) ───────────────────
 navigator.mediaDevices.getUserMedia({ video: true, audio: false })
   .then(stream => { document.getElementById('video').srcObject = stream; })
-  .catch(() => toast('Could not access webcam', true));
+  .catch(() => {});   // silently skip if denied — annotated feed will take over
 
 // ── Toast ──────────────────────────────────────────────────────────────────
 let _tt;
@@ -393,6 +614,7 @@ function toast(msg, err = false) {
 
 // ── Controls ───────────────────────────────────────────────────────────────
 monBtn.addEventListener('click', () => monitoring ? stop() : start());
+endBtn.addEventListener('click', endSession);
 
 // ── Calibration progress bar (client-side estimate, ~45 frames @ 30fps ≈ 1.5s) ──
 const CALIB_MS  = 1800;   // slightly longer than backend to avoid early hide
@@ -420,6 +642,23 @@ function stopCalibUI() {
   }, 300);
 }
 
+function showAnnotatedFeed(on) {
+  const vid   = document.getElementById('video');
+  const feed  = document.getElementById('feed');
+  const label = document.getElementById('feed-label');
+  if (on) {
+    feed.src          = '/video-feed';
+    feed.style.display = 'block';
+    label.style.display = 'block';
+    vid.style.display  = 'none';
+  } else {
+    feed.src          = '';
+    feed.style.display = 'none';
+    label.style.display = 'none';
+    vid.style.display  = 'block';
+  }
+}
+
 async function start() {
   const r = await fetch('/start-monitoring', { method: 'POST' });
   const d = await r.json();
@@ -427,9 +666,11 @@ async function start() {
   monitoring = true;
   monBtn.textContent = 'Stop Monitoring';
   monBtn.classList.add('stop');
+  endBtn.disabled = false;
   badge.textContent = 'Monitoring';
   badge.classList.add('running');
-  startCalibUI();                      // show immediately, don't wait for poll
+  showAnnotatedFeed(true);
+  startCalibUI();
   pollId = setInterval(poll, 1000);
 }
 
@@ -439,11 +680,40 @@ async function stop() {
   monitoring = false;
   monBtn.textContent = 'Start Monitoring';
   monBtn.classList.remove('stop');
+  endBtn.disabled = true;
   badge.textContent = 'Idle';
   badge.classList.remove('running');
+  showAnnotatedFeed(false);
   stopCalibUI();
   setPhone(false);
-  setDist(false, false);
+  setDist(false, false, 0, 0, 0);
+}
+
+async function endSession() {
+  clearInterval(pollId);
+  endBtn.disabled = true;
+  const r = await fetch('/end-session', { method: 'POST' });
+  const d = await r.json();
+
+  monitoring = false;
+  badge.textContent = 'Idle';
+  badge.classList.remove('running');
+  showAnnotatedFeed(false);
+
+  // Populate summary
+  document.getElementById('sum-total').textContent     = formatTime(d.total_seconds);
+  document.getElementById('sum-focused').textContent   = formatTime(d.focused_seconds);
+  document.getElementById('sum-distracted').textContent = formatTime(d.distracted_seconds);
+  document.getElementById('sum-phone').textContent     = formatTime(d.phone_seconds);
+
+  const focusPct = d.total_seconds > 0
+    ? Math.round((d.focused_seconds / d.total_seconds) * 100) : 0;
+  document.getElementById('ratio-fill').style.width = focusPct + '%';
+  document.getElementById('ratio-label').textContent = focusPct + '% focused';
+
+  // Switch views
+  document.querySelector('.layout').style.display = 'none';
+  document.getElementById('summary-view').classList.add('visible');
 }
 
 // ── Status polling ─────────────────────────────────────────────────────────
@@ -453,8 +723,7 @@ async function poll() {
   try {
     const d = await (await fetch('/status')).json();
     setPhone(d.phone);
-    setDist(d.eyes_off, d.calibrating);
-    // Hide overlay as soon as backend confirms calibration is done
+    setDist(d.eyes_off, d.calibrating, d.delta_pitch, d.delta_yaw, d.score);
     if (_wasCalibrating && !d.calibrating) stopCalibUI();
     _wasCalibrating = !!d.calibrating;
   } catch {}
@@ -466,12 +735,27 @@ function setPhone(on) {
   document.getElementById('phone-val').textContent = on ? 'Detected' : 'Not detected';
 }
 
-function setDist(on, calibrating) {
+function setDist(on, calibrating, dp, dy, score) {
   const active = on && !calibrating;
   document.getElementById('dist-dot').classList.toggle('on', active);
   document.getElementById('dist-card').classList.toggle('alert', active);
   document.getElementById('dist-val').textContent =
     calibrating ? 'Calibrating…' : (on ? 'Distracted' : 'Focused');
+
+  // Angle readout
+  const angEl = document.getElementById('dist-angles');
+  if (calibrating || dp == null) {
+    angEl.textContent = '—';
+  } else {
+    const sign = v => (v >= 0 ? '+' : '') + v.toFixed(1);
+    angEl.textContent = `dP ${sign(dp)}°   dY ${sign(dy)}°`;
+  }
+
+  // Score bar (SCORE_MAX = 30, SCORE_THRESHOLD = 10)
+  const SCORE_MAX = 30;
+  const bar = document.getElementById('score-bar');
+  bar.style.width = ((score / SCORE_MAX) * 100) + '%';
+  bar.classList.toggle('alert', active);
 }
 </script>
 
